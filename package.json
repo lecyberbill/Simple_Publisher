@@ -1,0 +1,48 @@
+{
+  "name": "simple-pao",
+  "private": true,
+  "version": "0.0.0",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "electron": "wait-on tcp:5173 && electron .",
+    "dev:electron": "concurrently -k \"cross-env BROWSER=none npm run dev\" \"tsc -p electron/tsconfig.json -w\" \"wait-on dist-electron/main.js && npm run electron\"",
+    "build:electron": "tsc -p electron/tsconfig.json && vite build && electron-builder"
+  },
+  "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
+    "@types/fabric": "^5.3.10",
+    "@types/qrcode": "^1.5.6",
+    "electron-squirrel-startup": "^1.0.1",
+    "fabric": "^6.9.0",
+    "font-list": "^2.0.1",
+    "jspdf": "^3.0.4",
+    "lucide-react": "^0.559.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "svg2pdf.js": "^2.6.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^39.2.6",
+    "electron-builder": "^26.0.12",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4",
+    "wait-on": "^9.0.3"
+  }
+}
