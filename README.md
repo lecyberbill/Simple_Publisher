@@ -1,4 +1,4 @@
-# Simple PAO (Desktop Publishing)
+# Simple Publisher (Desktop Publishing)
 
 A simple, offline-first Desktop Publishing application built with Electron, React, and Fabric.js.
 
