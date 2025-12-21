@@ -22,6 +22,8 @@ export const CanvasArea = ({ onCanvasReady, onSelectionChange, children }: Canva
             width: containerRef.current.clientWidth,
             backgroundColor: '#e0e0e0', // Workspace Gray
             preserveObjectStacking: true,
+            fireRightClick: true,  // Enable right click events (mouse:down with button 3)
+            stopContextMenu: true, // Prevent native browser context menu
         });
 
         canvasInstance.current = newCanvas;
@@ -48,7 +50,10 @@ export const CanvasArea = ({ onCanvasReady, onSelectionChange, children }: Canva
             resizeObserver.observe(containerRef.current);
         }
 
+        console.log("CanvasArea: MOUNTED / INITIALIZED");
+
         return () => {
+            console.log("CanvasArea: UNMOUNTING / DISPOSING");
             resizeObserver.disconnect();
             if (canvasInstance.current) {
                 canvasInstance.current.dispose();

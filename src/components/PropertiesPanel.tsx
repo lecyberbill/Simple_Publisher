@@ -20,9 +20,25 @@ interface PropertiesPanelProps {
     onStartCrop?: () => void;
     onApplyCrop?: () => void;
     onCancelCrop?: () => void;
+    // Drawing Props
+    activeTool?: string;
+    drawingSettings?: {
+        brushType: string;
+        setBrushType: (t: string) => void;
+        brushWidth: number;
+        setBrushWidth: (w: number) => void;
+        brushColor: string;
+        setBrushColor: (c: string) => void;
+        brushShadowColor: string;
+        setBrushShadowColor: (c: string) => void;
+        brushShadowWidth: number;
+        setBrushShadowWidth: (w: number) => void;
+        brushTexture: string | null;
+        setBrushTexture: (t: string | null) => void;
+    };
 }
 
-export const PropertiesPanel = ({ selectedObject, systemFonts, onPropertyChange, onAction, isCropping, onStartCrop, onApplyCrop, onCancelCrop }: PropertiesPanelProps) => {
+export const PropertiesPanel = ({ selectedObject, systemFonts, onPropertyChange, onAction, isCropping, onStartCrop, onApplyCrop, onCancelCrop, activeTool, drawingSettings }: PropertiesPanelProps) => {
 
     const PX_PER_MM = 3.779527559;
 
@@ -40,6 +56,44 @@ export const PropertiesPanel = ({ selectedObject, systemFonts, onPropertyChange,
         </div>
     );
 
+    // Safety check for parsing
+    const safeParseInt = (val: string, fallback = 0) => {
+        const parsed = parseInt(val, 10);
+        return isNaN(parsed) ? fallback : parsed;
+    };
+    const safeParseFloat = (val: string, fallback = 0) => {
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? fallback : parsed;
+    };
+
+
+    // Helper for rows
+    const renderInputRow = (label: string, input: React.ReactNode) => (
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', fontSize: '12px' }}>
+            <div style={{ width: '80px', color: 'var(--text-muted)' }}>{label}</div>
+            <div style={{ flex: 1 }}>{input}</div>
+        </div>
+    );
+
+    const inputStyle = {
+        width: '100%',
+        background: 'var(--bg-canvas)',
+        border: '1px solid var(--border-color)',
+        color: 'var(--text-primary)',
+        padding: '4px 8px',
+        borderRadius: '4px'
+    };
+
+    const iconButtonStyle: React.CSSProperties = {
+        flex: 1,
+        padding: '6px',
+        background: 'var(--input-bg)',
+        border: '1px solid var(--input-border)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        cursor: 'pointer'
+    };
 
     // If we are cropping, show specialized crop panel regardless of selection
     if (isCropping) {
@@ -47,42 +101,118 @@ export const PropertiesPanel = ({ selectedObject, systemFonts, onPropertyChange,
             <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 {renderSectionHeader('Crop Mode')}
                 <div style={{ padding: '8px', flex: 1 }}>
-                    <div style={{ fontSize: '11px', color: 'var(--accent-color)', textAlign: 'center', padding: '8px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '4px', marginBottom: '16px' }}>
-                        Adjust the white overlay rectangle to frame your image.
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <button
-                            onClick={onApplyCrop}
-                            style={{
-                                padding: '10px',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                background: 'var(--accent-color)',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
-                            }}
-                        >
-                            <ImageIcon size={16} /> Apply Crop
-                        </button>
-                        <button
-                            onClick={onCancelCrop}
-                            style={{
-                                padding: '10px',
-                                fontSize: '12px',
-                                background: 'var(--input-bg)',
-                                color: 'var(--text-primary)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '4px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Cancel
-                        </button>
-                    </div>
+                    Transform and Resize image to crop.
                 </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                    <button onClick={onCancelCrop} style={{ flex: 1, padding: '8px', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
+                    <button onClick={onApplyCrop} style={{ flex: 1, padding: '8px', background: 'var(--accent-color)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Apply</button>
+                </div>
+            </div>
+        );
+    }
+
+
+
+    // DRAWING MODE SETTINGS (Active Tool OR Selected Brush Object)
+    // @ts-ignore
+    const isBrushObject = selectedObject && selectedObject.brushType;
+    if ((activeTool === 'brush' || isBrushObject) && drawingSettings) {
+        return (
+            <div style={{ padding: '16px', color: 'var(--text-primary)', height: '100%', overflowY: 'auto' }}>
+                {renderSectionHeader('Outils de Dessin')}
+
+                {renderInputRow('Type',
+                    <select
+                        style={inputStyle}
+                        value={drawingSettings.brushType}
+                        onChange={(e) => drawingSettings.setBrushType(e.target.value)}
+                    >
+                        <option value="Pencil">Crayon Simple</option>
+                        <option value="Circle">Cercles</option>
+                        <option value="Spray">Spray</option>
+                        <option value="Pattern">Motif (Défaut)</option>
+                        <option value="HLine">Lignes Horizontales</option>
+                        <option value="VLine">Lignes Verticales</option>
+                        <option value="Square">Carrés</option>
+                        <option value="Diamond">Losanges</option>
+                        <option value="Texture">Texture (Image)</option>
+                    </select>
+                )}
+
+                {renderInputRow('Couleur',
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input
+                            type="color"
+                            value={drawingSettings.brushColor}
+                            onChange={(e) => drawingSettings.setBrushColor(e.target.value)}
+                            style={{ width: '30px', height: '30px', border: 'none', padding: 0, background: 'transparent', cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{drawingSettings.brushColor}</span>
+                    </div>
+                )}
+
+                {renderInputRow('Épaisseur',
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="range" min="1" max="100" value={drawingSettings.brushWidth} onChange={(e) => drawingSettings.setBrushWidth(parseInt(e.target.value))} style={{ flex: 1 }} />
+                        <span style={{ fontSize: '11px', width: '20px', textAlign: 'right' }}>{drawingSettings.brushWidth}</span>
+                    </div>
+                )}
+
+                {renderSectionHeader('Ombre')}
+                {renderInputRow('Couleur Ombre',
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <input
+                            type="color"
+                            value={drawingSettings.brushShadowColor}
+                            onChange={(e) => drawingSettings.setBrushShadowColor(e.target.value)}
+                            style={{ width: '30px', height: '30px', border: 'none', padding: 0, background: 'transparent', cursor: 'pointer' }}
+                        />
+                    </div>
+                )}
+                {renderInputRow('Largeur Ombre',
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="range" min="0" max="50" value={drawingSettings.brushShadowWidth} onChange={(e) => drawingSettings.setBrushShadowWidth(parseInt(e.target.value))} style={{ flex: 1 }} />
+                        <span style={{ fontSize: '11px', width: '20px', textAlign: 'right' }}>{drawingSettings.brushShadowWidth}</span>
+                    </div>
+                )}
+
+                {['Pattern', 'HLine', 'VLine', 'Square', 'Diamond'].includes(drawingSettings.brushType) && (
+                    renderInputRow('Taille Motif',
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <input type="range" min="5" max="50" value={drawingSettings.brushPatternScale || 10} onChange={(e) => drawingSettings.setBrushPatternScale && drawingSettings.setBrushPatternScale(parseInt(e.target.value))} style={{ flex: 1 }} />
+                            <span style={{ fontSize: '11px', width: '20px', textAlign: 'right' }}>{drawingSettings.brushPatternScale}</span>
+                        </div>
+                    )
+                )}
+
+                {drawingSettings.brushType === 'Texture' && (
+                    <>
+                        {renderSectionHeader('Texture')}
+                        <div style={{ marginBottom: '8px' }}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                        const reader = new FileReader();
+                                        reader.onload = (f) => {
+                                            if (f.target?.result) drawingSettings.setBrushTexture(f.target.result as string);
+                                        };
+                                        reader.readAsDataURL(e.target.files[0]);
+                                    }
+                                }}
+                                style={{ fontSize: '11px', color: 'var(--text-muted)' }}
+                            />
+                        </div>
+                        {drawingSettings.brushTexture && (
+                            <div style={{ width: '100%', height: '60px', overflow: 'hidden', border: '1px solid var(--border-color)', borderRadius: '4px', marginTop: '4px' }}>
+                                <img src={drawingSettings.brushTexture} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Texture Preview" />
+                            </div>
+                        )}
+                    </>
+                )}
+
             </div>
         );
     }
@@ -140,50 +270,7 @@ export const PropertiesPanel = ({ selectedObject, systemFonts, onPropertyChange,
         return (selectedObject as any)[key] ?? defaultVal;
     };
 
-    // Helper for locale-safe numbers
-    const safeParseFloat = (val: string, fallback = 0) => {
-        const num = parseFloat(val.replace(',', '.'));
-        return isNaN(num) ? fallback : num;
-    };
 
-    const safeParseInt = (val: string, fallback = 0) => {
-        const num = parseInt(val, 10);
-        return isNaN(num) ? fallback : num;
-    };
-
-
-    const renderInputRow = (label: string, input: React.ReactNode) => (
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-            <label style={{
-                width: '80px',
-                fontSize: '12px',
-                color: 'var(--text-secondary)'
-            }}>{label}</label>
-            <div style={{ flex: 1 }}>{input}</div>
-        </div>
-    );
-
-    const inputStyle: React.CSSProperties = {
-        width: '100%',
-        background: 'var(--input-bg)',
-        border: '1px solid var(--input-border)',
-        color: 'var(--text-primary)',
-        padding: '4px 8px',
-        borderRadius: '2px',
-        fontSize: '12px',
-        outline: 'none'
-    };
-
-    const iconButtonStyle: React.CSSProperties = {
-        flex: 1,
-        padding: '6px',
-        background: 'var(--input-bg)',
-        border: '1px solid var(--input-border)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        cursor: 'pointer'
-    };
 
     return (
         <div style={{ padding: '16px', color: 'var(--text-primary)', height: '100%', overflowY: 'auto' }}>
@@ -602,6 +689,79 @@ export const PropertiesPanel = ({ selectedObject, systemFonts, onPropertyChange,
                         />
                     </div>
                 )
+            )}
+
+            {/* Star Specific Controls */}
+            {(selectedObject as any).isStar && (
+                <>
+                    {renderSectionHeader('Étoile')}
+                    {renderInputRow('Branches',
+                        <input
+                            type="number"
+                            min="3"
+                            max="50"
+                            step="1"
+                            value={(selectedObject as any).starPoints || 5}
+                            onChange={(e) => {
+                                const points = safeParseInt(e.target.value, 5);
+                                onPropertyChange('starPoints', points);
+                                // Recaliculate shape
+                                // We need getStarPoints here. Since we can't easily import, let's duplicate logic or assume global?
+                                // Let's try to import it at top of file in next step.
+                                // For now, emit a custom event or just handle logic here?
+
+                                const innerRatio = (selectedObject as any).starInnerRadiusRatio || 0.5;
+                                const outerRadius = 50; // Base reference
+                                // Calculate new points
+                                const cx = 0, cy = 0;
+                                let angle = -Math.PI / 2;
+                                const step = Math.PI / points;
+                                const newPoints = [];
+                                for (let i = 0; i < points * 2; i++) {
+                                    const r = (i % 2 === 0) ? outerRadius : outerRadius * innerRatio;
+                                    const x = cx + Math.cos(angle) * r;
+                                    const y = cy + Math.sin(angle) * r;
+                                    newPoints.push({ x, y });
+                                    angle += step;
+                                }
+                                onPropertyChange('points', newPoints);
+                            }}
+                            style={inputStyle}
+                        />
+                    )}
+                    {renderInputRow('Ratio',
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <input
+                                type="range"
+                                min="0.1"
+                                max="0.9"
+                                step="0.05"
+                                value={(selectedObject as any).starInnerRadiusRatio || 0.5}
+                                onChange={(e) => {
+                                    const ratio = safeParseFloat(e.target.value, 0.5);
+                                    onPropertyChange('starInnerRadiusRatio', ratio);
+
+                                    const points = (selectedObject as any).starPoints || 5;
+                                    const outerRadius = 50;
+                                    const cx = 0, cy = 0;
+                                    let angle = -Math.PI / 2;
+                                    const step = Math.PI / points;
+                                    const newPoints = [];
+                                    for (let i = 0; i < points * 2; i++) {
+                                        const r = (i % 2 === 0) ? outerRadius : outerRadius * ratio;
+                                        const x = cx + Math.cos(angle) * r;
+                                        const y = cy + Math.sin(angle) * r;
+                                        newPoints.push({ x, y });
+                                        angle += step;
+                                    }
+                                    onPropertyChange('points', newPoints);
+                                }}
+                                style={{ flex: 1 }}
+                            />
+                            <span style={{ fontSize: '11px', width: '25px', textAlign: 'right' }}>{(selectedObject as any).starInnerRadiusRatio}</span>
+                        </div>
+                    )}
+                </>
             )}
 
             {/* Path Specific Controls */}

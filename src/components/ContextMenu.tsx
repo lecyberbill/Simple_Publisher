@@ -17,15 +17,25 @@ interface ContextMenuProps {
 export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, options, onClose }) => {
     const menuRef = useRef<HTMLDivElement>(null);
 
+    console.log("ContextMenu: RENDER", { x, y, optionsLength: options.length });
+
     useEffect(() => {
+        console.log("ContextMenu: MOUNTED");
         const handleClickOutside = (event: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                console.log("ContextMenu: Click Outside Detected -> Closing");
                 onClose();
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
+        // Delay attaching listener to avoid catching the current right-click event
+        // which would immediately close the menu.
+        const timer = setTimeout(() => {
+            document.addEventListener('mousedown', handleClickOutside);
+        }, 100);
+
         return () => {
+            clearTimeout(timer);
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [onClose]);

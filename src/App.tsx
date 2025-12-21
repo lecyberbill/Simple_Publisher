@@ -13,11 +13,13 @@ import { CanvasArea } from './components/CanvasArea';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { LayersPanel } from './components/LayersPanel';
 import { ContextMenu } from './components/ContextMenu';
-import { MousePointer2, Hand, PenTool } from 'lucide-react';
+import { MousePointer2, Hand, PenTool, Pencil, Paintbrush } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'svg2pdf.js';
 import { Ruler } from './components/Ruler';
 import { ColorPanel } from './components/ColorPanel';
+import { enterPathEditMode, exitPathEditMode, togglePathPointType, getStarPoints } from './utils/polyControlUtils';
+import type { PathControlHandle } from './utils/polyControlUtils';
 
 // ... (existing imports)
 
@@ -58,6 +60,15 @@ function App() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, visible: boolean, actions: any[] }>({ x: 0, y: 0, visible: false, actions: [] });
 
+  // Drawing State
+  const [brushType, setBrushType] = useState('Pencil');
+  const [brushWidth, setBrushWidth] = useState(5);
+  const [brushColor, setBrushColor] = useState('#000000');
+  const [brushShadowColor, setBrushShadowColor] = useState('#000000');
+  const [brushShadowWidth, setBrushShadowWidth] = useState(0);
+  const [brushTexture, setBrushTexture] = useState<string | null>(null);
+  const [brushPatternScale, setBrushPatternScale] = useState(10);
+
   const [showShapeMenu, setShowShapeMenu] = useState(false);
 
   const canvasRef = useRef<fabric.Canvas | null>(null);
@@ -86,6 +97,53 @@ function App() {
   const generateId = () => {
     return Math.random().toString(36).substr(2, 9);
   };
+
+  // Helper: Generate Pattern Canvas
+  const generatePatternCanvas = useCallback((type: string, color: string, scale: number) => {
+    const size = scale;
+    // @ts-ignore
+    const patternCanvas = document.createElement('canvas');
+    patternCanvas.width = patternCanvas.height = size;
+    const ctx = patternCanvas.getContext('2d');
+
+    if (!ctx) return patternCanvas;
+
+    if (type === 'Pattern') { // Dot
+      const radius = size / 4;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, radius, 0, Math.PI * 2, false);
+      ctx.closePath();
+      ctx.fill();
+    } else if (type === 'VLine') {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size / 2;
+      ctx.beginPath();
+      ctx.moveTo(0, size / 2);
+      ctx.lineTo(size, size / 2);
+      ctx.closePath();
+      ctx.stroke();
+    } else if (type === 'HLine') {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size / 2;
+      ctx.beginPath();
+      ctx.moveTo(size / 2, 0);
+      ctx.lineTo(size / 2, size);
+      ctx.closePath();
+      ctx.stroke();
+    } else if (type === 'Square') {
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, size - 2, size - 2);
+    } else if (type === 'Diamond') {
+      const rect = new fabric.Rect({ width: size * 0.7, height: size * 0.7, angle: 45, fill: color });
+      const canvasWidth = rect.getBoundingRect().width;
+      patternCanvas.width = patternCanvas.height = canvasWidth + 2; // Resize canvas for diamond
+      rect.set({ left: patternCanvas.width / 2, top: patternCanvas.height / 2 });
+      rect.render(ctx as any);
+    }
+
+    return patternCanvas;
+  }, []);
 
   const setupPage = (canvas: fabric.Canvas) => {
     // workspace background
@@ -158,65 +216,18 @@ function App() {
     }
   }, []);
 
-  // Keyboard Event Listener for Delete and Tab
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Delete / Backspace
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        const activeElement = document.activeElement;
-        const isInput = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
-
-        const activeObj = canvasRef.current?.getActiveObject();
-        // @ts-ignore
-        const isEditingText = activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text') && activeObj.isEditing;
-
-        if (!isInput && !isEditingText) {
-          handleDelete();
-        }
-      }
-
-      // Tab Key Handling
-      if (e.key === 'Tab') {
-        const activeObj = canvasRef.current?.getActiveObject();
-        if (activeObj && activeObj.type === 'textbox') {
-          const textbox = activeObj as fabric.Textbox;
-          // @ts-ignore
-          if (textbox.isEditing) {
-            e.preventDefault(); // Stop focus change
-
-            // Manual insertion
-            const text = textbox.text || '';
-            const start = textbox.selectionStart || 0;
-            const end = textbox.selectionEnd || 0;
-            const newText = text.slice(0, start) + '\t' + text.slice(end);
-            textbox.set('text', newText);
-            textbox.selectionStart = start + 1;
-            textbox.selectionEnd = start + 1;
-            textbox.set('dirty', true);
-
-            canvasRef.current?.requestRenderAll();
-            saveHistory();
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleDelete, saveHistory]);
 
 
-  const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'pen'>('select');
+
+
+  const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'pencil' | 'pen' | 'brush'>('select');
   const isPanning = useRef(false);
-  const isDrawing = useRef(false);
-  const drawingPath = useRef<fabric.Path | null>(null);
-  const drawingPoints = useRef<{ x: number; y: number }[]>([]);
+
   const lastMousePosition = useRef({ x: 0, y: 0 });
 
   // Edit Mode State
   const [editingPath, setEditingPath] = useState<fabric.Path | null>(null);
-  const prevEditingPathRef = useRef<fabric.Path | null>(null);
-  const editHandles = useRef<fabric.Object[]>([]);
+
 
   // ... existing code ...
 
@@ -327,136 +338,306 @@ function App() {
     };
   }, [refreshKey, activeTool]); // Re-run when tool changes
 
-  // PEN TOOL LOGIC
+  // TOOL STATE MANAGEMENT (Hand, Pen, Select)
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+
+    // Reset Defaults
+    canvas.isDrawingMode = false;
+    canvas.selection = true;
+    canvas.defaultCursor = 'default';
+    canvas.forEachObject(o => {
+      if (!(o as any).isPage) o.selectable = true;
+    });
+
+    if (activeTool === 'hand') {
+      canvas.selection = false;
+      canvas.defaultCursor = 'grab';
+      canvas.forEachObject(o => o.selectable = false);
+      canvas.discardActiveObject();
+
+    } else if (activeTool === 'pencil') {
+      canvas.isDrawingMode = true;
+      // Simple Pencil
+      // @ts-ignore
+      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+      canvas.freeDrawingBrush.width = 2;
+      canvas.freeDrawingBrush.color = 'black';
+      canvas.defaultCursor = 'crosshair';
+      canvas.discardActiveObject();
+
+    } else if (activeTool === 'brush') {
+      canvas.isDrawingMode = true;
+
+      // Configure Advanced Brush
+      const configureBrush = () => {
+        let brush = null;
+        if (brushType === 'Pencil') {
+          // @ts-ignore
+          brush = new fabric.PencilBrush(canvas);
+        } else if (brushType === 'Circle') {
+          // @ts-ignore
+          brush = new fabric.CircleBrush(canvas);
+        } else if (brushType === 'Spray') {
+          // @ts-ignore
+          brush = new fabric.SprayBrush(canvas);
+          brush = new fabric.PatternBrush(canvas); // Default Pattern
+        } else if (['Pattern', 'HLine', 'VLine', 'Square', 'Diamond', 'Texture'].includes(brushType)) {
+          // @ts-ignore
+          brush = new fabric.PatternBrush(canvas);
+
+          if (brushType === 'Pattern') {
+            // Default Dot Pattern with Scale
+            brush.getPatternSrc = function () {
+              const size = brushPatternScale; // approx space
+              const radius = size / 4;
+              // @ts-ignore
+              const patternCanvas = document.createElement('canvas');
+              patternCanvas.width = patternCanvas.height = size;
+              const ctx = patternCanvas.getContext('2d');
+              if (ctx) {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(size / 2, size / 2, radius, 0, Math.PI * 2, false);
+                ctx.closePath();
+                ctx.fill();
+              }
+              return patternCanvas;
+            };
+          } else if (brushType === 'VLine') {
+            brush.getPatternSrc = function () {
+              const size = brushPatternScale;
+              // @ts-ignore
+              const patternCanvas = document.createElement('canvas');
+              patternCanvas.width = patternCanvas.height = size;
+              const ctx = patternCanvas.getContext('2d');
+              if (ctx) {
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = size / 2;
+                ctx.beginPath();
+                ctx.moveTo(0, size / 2);
+                ctx.lineTo(size, size / 2);
+                ctx.closePath();
+                ctx.stroke();
+              }
+              return patternCanvas;
+            };
+          } else if (brushType === 'HLine') {
+            brush.getPatternSrc = function () {
+              const size = brushPatternScale;
+              // @ts-ignore
+              const patternCanvas = document.createElement('canvas');
+              patternCanvas.width = patternCanvas.height = size;
+              const ctx = patternCanvas.getContext('2d');
+              if (ctx) {
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = size / 2;
+                ctx.beginPath();
+                ctx.moveTo(size / 2, 0);
+                ctx.lineTo(size / 2, size);
+                ctx.closePath();
+                ctx.stroke();
+              }
+              return patternCanvas;
+            };
+          } else if (brushType === 'Square') {
+            brush.getPatternSrc = function () {
+              const size = brushPatternScale;
+              // @ts-ignore
+              const patternCanvas = document.createElement('canvas');
+              patternCanvas.width = patternCanvas.height = size;
+              const ctx = patternCanvas.getContext('2d');
+              if (ctx) {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(0, 0, size - 2, size - 2);
+              }
+              return patternCanvas;
+            };
+          } else if (brushType === 'Diamond') {
+            brush.getPatternSrc = function () {
+              const size = brushPatternScale;
+              // @ts-ignore
+              const patternCanvas = document.createElement('canvas');
+              const rect = new fabric.Rect({ width: size * 0.7, height: size * 0.7, angle: 45, fill: this.color });
+              const canvasWidth = rect.getBoundingRect().width;
+              patternCanvas.width = patternCanvas.height = canvasWidth + 2;
+              rect.set({ left: patternCanvas.width / 2, top: patternCanvas.height / 2 });
+
+              const ctx = patternCanvas.getContext('2d');
+              if (ctx) rect.render(ctx as any);
+              return patternCanvas;
+            };
+          } else if (brushType === 'Texture' && brushTexture) {
+            const img = new Image();
+            img.src = brushTexture;
+            brush.source = img;
+          }
+        }
+
+        if (brush) {
+          brush.width = brushWidth || 5;
+          brush.color = brushColor || 'black';
+          if (brushShadowWidth > 0) {
+            brush.shadow = new fabric.Shadow({
+              blur: brushShadowWidth,
+              offsetX: 0,
+              offsetY: 0,
+              affectStroke: true,
+              color: brushShadowColor
+            });
+          }
+          canvas.freeDrawingBrush = brush;
+        }
+      };
+
+      configureBrush();
+
+      canvas.defaultCursor = 'crosshair';
+      canvas.discardActiveObject();
+
+    } else if (activeTool === 'pen') {
+      canvas.defaultCursor = 'crosshair';
+      canvas.selection = false;
+      canvas.forEachObject(o => o.selectable = false);
+      canvas.discardActiveObject();
+
+    } else if (activeTool === 'select') {
+      // Default behavior restored above
+    }
+
+    canvas.requestRenderAll();
+
+    // UPDATE SELECTED BRUSH OBJECT
+    if (canvas.getActiveObject()) {
+      const activeObj = canvas.getActiveObject() as any;
+      if (activeObj && activeObj.brushType) {
+        // It's a brush path! Update it.
+        activeObj.set('strokeWidth', brushWidth);
+
+        if (['Pencil', 'Circle', 'Spray'].includes(brushType)) {
+          activeObj.set('stroke', brushColor);
+        } else if (['Pattern', 'HLine', 'VLine', 'Square', 'Diamond'].includes(brushType)) {
+          // Re-generate pattern
+          const patternCanvas = generatePatternCanvas(brushType, brushColor, brushPatternScale);
+          const pattern = new fabric.Pattern({
+            source: patternCanvas,
+            repeat: 'repeat'
+          });
+          activeObj.set('stroke', pattern);
+          activeObj.set('brushPatternScale', brushPatternScale);
+          activeObj.set('brushType', brushType);
+        }
+
+        canvas.requestRenderAll();
+      }
+    }
+
+  }, [activeTool, brushType, brushWidth, brushColor, brushShadowColor, brushShadowWidth, brushTexture, brushPatternScale, generatePatternCanvas]);
+
+  // BEZIER PEN TOOL LOGIC
   useEffect(() => {
     if (!canvasRef.current || activeTool !== 'pen') return;
     const canvas = canvasRef.current;
 
+    let points: { x: number, y: number }[] = [];
+    let activePath: fabric.Path | null = null;
+    let tempLine: fabric.Line | null = null;
+
+    // Mouse Down: Add Point
     const onMouseDown = (opt: any) => {
-      if (activeTool !== 'pen') return;
-
       const evt = opt.e;
       const pointer = canvas.getPointer(evt);
 
-      if (!isDrawing.current) {
-        // Start New Path
-        isDrawing.current = true;
-        // Start with initial point
-        drawingPoints.current = [{ x: pointer.x, y: pointer.y }];
+      points.push({ x: pointer.x, y: pointer.y });
 
-        const pathData = `M ${pointer.x} ${pointer.y}`;
-        const path = new fabric.Path(pathData, {
-          stroke: 'black',
-          strokeWidth: 2,
-          fill: '',
-          selectable: false,
-          evented: false,
-          objectCaching: false
-        }) as any;
-        path.isDrawingPath = true; // Flag for internal use
-
-        canvas.add(path);
-        drawingPath.current = path;
-      } else {
-        // Add new anchor point
-        // Note: If previous was a curve, we might need to handle control points.
-        // For now, simpler: adjust the *previous* segment if we are finishing a drag?
-        // Actually, let's stick to standard behavior:
-        // Click adds a point. If you hold and drag, you pull out control points for *that* point.
-
-        // Add the new point
-        drawingPoints.current.push({ x: pointer.x, y: pointer.y });
-        updatePathPreview();
+      if (points.length > 1) {
+        renderPath();
       }
     };
 
-    const updatePathPreview = () => {
-      if (!drawingPath.current || drawingPoints.current.length === 0) return;
-
-      // Rebuild path string
-      // Simple Polyline for now. drag-to-curve needs separate "drag" logic which complicates state.
-      // User asked for "Click & Drag = Curve".
-      // To implement that, we need 'onMouseMove' to update the *latest* point's control points if mouse is down.
-
-      let d = `M ${drawingPoints.current[0].x} ${drawingPoints.current[0].y}`;
-      for (let i = 1; i < drawingPoints.current.length; i++) {
-        d += ` L ${drawingPoints.current[i].x} ${drawingPoints.current[i].y}`;
-      }
-
-      drawingPath.current.set({ path: fabric.util.parsePath(d) });
-      // drawingPath.current.setCoords(); // Not strictly needed during draw
-      canvas.requestRenderAll();
-    };
-
+    // Mouse Move: Rubber Band
     const onMouseMove = (opt: any) => {
-      if (activeTool !== 'pen' || !isDrawing.current || !drawingPath.current) return;
-
-      // Visualize line to current mouse position (Rubber banding)
+      if (points.length === 0) return;
       const evt = opt.e;
       const pointer = canvas.getPointer(evt);
 
-      let d = `M ${drawingPoints.current[0].x} ${drawingPoints.current[0].y}`;
-      for (let i = 1; i < drawingPoints.current.length; i++) {
-        d += ` L ${drawingPoints.current[i].x} ${drawingPoints.current[i].y}`;
-      }
-      d += ` L ${pointer.x} ${pointer.y}`;
-
-      drawingPath.current.set({ path: fabric.util.parsePath(d) });
-      canvas.requestRenderAll();
-    };
-
-    const finishPath = () => {
-      if (!drawingPath.current || !canvasRef.current) return;
-
-      const canvas = canvasRef.current;
-      const originalPath = drawingPath.current;
-
-      // FIX: Re-create the path from scratch to ensure Fabric calculates dimensions correctly.
-      // The original path object often has 0 width/height because it was built incrementally.
-      const d = originalPath.path!.map(cmd => cmd.join(' ')).join(' ');
-
-      canvas.remove(originalPath);
-
-      const newPath = new fabric.Path(d, {
-        stroke: 'black',
-        strokeWidth: 2,
-        fill: 'transparent',
-        selectable: true, // Make selectable
-        evented: true,
-        objectCaching: true
-      });
-
-      canvas.add(newPath);
-      canvas.setActiveObject(newPath);
-
-      // Clean up
-      isDrawing.current = false;
-      drawingPath.current = null;
-      drawingPoints.current = [];
-
-      saveHistory();
-      canvas.requestRenderAll();
-    };
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (activeTool !== 'pen') return;
-      if (e.key === 'Enter') {
-        finishPath();
-      }
-      if (e.key === 'Escape') {
-        // Cancel
-        if (drawingPath.current) {
-          canvas.remove(drawingPath.current);
-        }
-        isDrawing.current = false;
-        drawingPath.current = null;
-        drawingPoints.current = [];
+      if (!tempLine) {
+        tempLine = new fabric.Line([points[points.length - 1].x, points[points.length - 1].y, pointer.x, pointer.y], {
+          stroke: '#999', strokeWidth: 1, selectable: false, evented: false, strokeDashArray: [5, 5]
+        });
+        canvas.add(tempLine);
+      } else {
+        tempLine.set({ x1: points[points.length - 1].x, y1: points[points.length - 1].y, x2: pointer.x, y2: pointer.y });
         canvas.requestRenderAll();
       }
     };
 
+    // Double Click: Finish Path
     const onDoubleClick = () => {
-      finishPath();
+      finishPath(false);
+    };
+
+    // Key Down: Enter/Escape
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (activeTool !== 'pen') return;
+      if (e.key === 'Enter') finishPath(false); // Open
+      if (e.key === 'Escape') cancelPath();
+    };
+
+    const renderPath = () => {
+      if (activePath) canvas.remove(activePath);
+
+      // Polyline construction
+      let d = `M ${points[0].x} ${points[0].y}`;
+      for (let i = 1; i < points.length; i++) {
+        d += ` L ${points[i].x} ${points[i].y}`;
+      }
+
+      activePath = new fabric.Path(d, {
+        stroke: 'black', strokeWidth: 2, fill: '',
+        selectable: false, evented: false, objectCaching: false
+      });
+      canvas.add(activePath);
+      canvas.requestRenderAll();
+    };
+
+    const finishPath = (closed: boolean) => {
+      if (points.length < 2) return;
+      if (activePath) canvas.remove(activePath);
+      if (tempLine) canvas.remove(tempLine);
+
+      let d = `M ${points[0].x} ${points[0].y}`;
+      for (let i = 1; i < points.length; i++) {
+        d += ` L ${points[i].x} ${points[i].y}`;
+      }
+      if (closed) d += ' Z';
+
+      const finalPath = new fabric.Path(d, {
+        stroke: 'black', strokeWidth: 2, fill: 'transparent',
+        selectable: true, evented: true
+      });
+      // @ts-ignore
+      finalPath.uid = generateId();
+
+      canvas.add(finalPath);
+      canvas.setActiveObject(finalPath);
+      saveHistory();
+
+      // Reset
+      points = [];
+      activePath = null;
+      tempLine = null;
+      canvas.requestRenderAll();
+    };
+
+    const cancelPath = () => {
+      if (activePath) canvas.remove(activePath);
+      if (tempLine) canvas.remove(tempLine);
+      points = [];
+      activePath = null;
+      tempLine = null;
+      canvas.requestRenderAll();
     };
 
     canvas.on('mouse:down', onMouseDown);
@@ -469,377 +650,106 @@ function App() {
       canvas.off('mouse:move', onMouseMove);
       canvas.off('mouse:dblclick', onDoubleClick);
       window.removeEventListener('keydown', onKeyDown);
+      cancelPath();
     };
-  }, [activeTool]);
+  }, [activeTool, saveHistory]);
+
+  // PATH CREATED LISTENER (History)
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+
+    const handlePathCreated = (e: any) => {
+      const path = e.path;
+      if (path) {
+        // Assign UID if needed or just save history
+        // @ts-ignore
+        path.uid = generateId();
+        path.set({ selectable: true, evented: true });
+
+        // Store Brush Metadata for future editing
+        // @ts-ignore
+        path.brushType = brushType;
+        // @ts-ignore
+        path.brushPatternScale = brushPatternScale;
+        // @ts-ignore
+        path.brushTexture = brushTexture;
+        // @ts-ignore
+        path.origStrokeWidth = brushWidth; // Just in case
+
+        saveHistory();
+        // Auto-select the drawn path?
+        canvas.setActiveObject(path);
+        // Reset to select tool? Or keep drawing?
+        // Usually keep drawing. 
+      }
+    };
+
+    canvas.on('path:created', handlePathCreated);
+    return () => { canvas.off('path:created', handlePathCreated); };
+  }, [saveHistory]);
+
+  // DOUBLE CLICK TO EDIT PATH
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+
+    const handleDblClick = (e: any) => {
+      const target = e.target;
+      if (target && target instanceof fabric.Path && !(target as any).isHandle) {
+        // Trigger Edit Mode
+        console.log("Double Click on Path -> Edit Mode", target);
+        setEditingPath(target);
+      }
+    };
+
+    canvas.on('mouse:dblclick', handleDblClick);
+    return () => { canvas.off('mouse:dblclick', handleDblClick); };
+  }, []);
 
   // EDIT MODE LOGIC (Vertex Manipulation)
   useEffect(() => {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
 
-    const clearHandles = () => {
-      editHandles.current.forEach(h => canvas.remove(h));
-      editHandles.current = [];
-    };
-
-    const updatePathFromHandles = (pathObj: fabric.Path) => {
-      if (!pathObj.path) return;
-
-      const matrix = pathObj.calcTransformMatrix();
-      const invertMatrix = fabric.util.invertTransform(matrix);
-      const pathOffset = pathObj.pathOffset || { x: 0, y: 0 };
-
-      const newPathData: any[] = [];
-      let handleIdx = 0;
-
-      pathObj.path.forEach((cmd: any) => {
-        const type = cmd[0];
-
-        if (type === 'M' || type === 'L') {
-          const h = editHandles.current[handleIdx];
-          if (h) {
-            const worldPt = h.getCenterPoint();
-            const localPt = fabric.util.transformPoint(worldPt, invertMatrix);
-            // Adjust for pathOffset
-            newPathData.push([type, localPt.x + pathOffset.x, localPt.y + pathOffset.y]);
-            handleIdx++;
-          }
-        } else if (type === 'C') {
-          const h1 = editHandles.current[handleIdx];     // cp1
-          const h2 = editHandles.current[handleIdx + 1]; // cp2
-          const h3 = editHandles.current[handleIdx + 2]; // anchor
-          if (h1 && h2 && h3) {
-            const p1 = fabric.util.transformPoint(h1.getCenterPoint(), invertMatrix);
-            const p2 = fabric.util.transformPoint(h2.getCenterPoint(), invertMatrix);
-            const p3 = fabric.util.transformPoint(h3.getCenterPoint(), invertMatrix);
-            newPathData.push(['C',
-              p1.x + pathOffset.x, p1.y + pathOffset.y,
-              p2.x + pathOffset.x, p2.y + pathOffset.y,
-              p3.x + pathOffset.x, p3.y + pathOffset.y
-            ]);
-            handleIdx += 3;
-          }
-        } else if (type === 'Q') {
-          const h1 = editHandles.current[handleIdx];     // cp1
-          const h2 = editHandles.current[handleIdx + 1]; // anchor
-          if (h1 && h2) {
-            const p1 = fabric.util.transformPoint(h1.getCenterPoint(), invertMatrix);
-            const p2 = fabric.util.transformPoint(h2.getCenterPoint(), invertMatrix);
-            newPathData.push(['Q',
-              p1.x + pathOffset.x, p1.y + pathOffset.y,
-              p2.x + pathOffset.x, p2.y + pathOffset.y
-            ]);
-            handleIdx += 2;
-          }
-        } else if (type === 'Z') {
-          newPathData.push(['Z']);
-        }
-      });
-
-      pathObj.set({ path: newPathData as any });
-      pathObj.setCoords();
-      canvas.requestRenderAll();
-    };
-
-
     if (editingPath) {
-      prevEditingPathRef.current = editingPath;
-      clearHandles();
       const pathObj = editingPath;
-      const matrix = pathObj.calcTransformMatrix();
-      const pathOffset = pathObj.pathOffset || { x: 0, y: 0 };
 
-      const spawnHandles = () => {
-        clearHandles();
-        // Recalculate matrix/offset in case they changed (though mostly static in this context)
-        const matrix = pathObj.calcTransformMatrix();
-        const pathOffset = pathObj.pathOffset || { x: 0, y: 0 };
+      // Spawn handles
+      if (pathObj.path) {
+        enterPathEditMode(pathObj, canvas);
+      }
 
-        if (pathObj.path) {
-          pathObj.path.forEach((cmd: any, index: number) => {
-            const type = cmd[0];
-            const spawnHandle = (x: number, y: number, role: 'anchor' | 'cp', cmdIndex: number) => {
-              const localPt = new fabric.Point(x - pathOffset.x, y - pathOffset.y);
-              const pt = fabric.util.transformPoint(localPt, matrix);
+      // Exit callbacks
+      const handleSelectionCleared = () => {
+        // @ts-ignore
+        if (pathObj._isRefreshing) return;
+        setEditingPath(null);
+      };
 
-              const handle = new fabric.Rect({
-                left: pt.x,
-                top: pt.y,
-                width: role === 'anchor' ? 10 : 8,
-                height: role === 'anchor' ? 10 : 8,
-                fill: role === 'anchor' ? 'yellow' : 'white',
-                stroke: '#3b82f6',
-                strokeWidth: 1,
-                radius: role === 'anchor' ? 0 : 4,
-                rx: role === 'anchor' ? 0 : 4,
-                ry: role === 'anchor' ? 0 : 4,
-                originX: 'center',
-                originY: 'center',
-                hasControls: false,
-                hasBorders: true,
-                lockRotation: true,
-                lockScalingX: true,
-                lockScalingY: true,
-                transparentCorners: false,
-                excludeFromExport: true
-              }) as any;
-
-              handle.isHandle = true;
-              handle.cmdIndex = cmdIndex;
-              handle.role = role;
-
-              handle.on('moving', () => updatePathFromHandles(pathObj));
-
-              handle.on('mousedblclick', () => {
-                if (role !== 'anchor') return;
-
-                const currentCmd = pathObj.path![cmdIndex];
-                const newType = (currentCmd[0] === 'L' || currentCmd[0] === 'M') ? 'C' : 'L';
-
-                if (currentCmd[0] === 'M') return;
-
-                if (newType === 'C') {
-                  const currCmdAny = currentCmd as any[];
-                  const currX = currCmdAny[currCmdAny.length - 2] as number;
-                  const currY = currCmdAny[currCmdAny.length - 1] as number;
-
-                  if (typeof currX !== 'number' || typeof currY !== 'number') return;
-
-                  const cp1x = currX - 20;
-                  const cp1y = currY;
-                  const cp2x = currX - 10;
-                  const cp2y = currY;
-
-                  (pathObj.path as any)[cmdIndex] = ['C', cp1x, cp1y, cp2x, cp2y, currX, currY];
-
-                } else {
-                  const currCmdAny = currentCmd as any[];
-                  const len = currCmdAny.length;
-                  const x = currCmdAny[len - 2] as number;
-                  const y = currCmdAny[len - 1] as number;
-                  (pathObj.path as any)[cmdIndex] = ['L', x, y];
-                }
-
-                pathObj.set({ path: [...pathObj.path!] });
-                spawnHandles();
-                canvas.requestRenderAll();
-              });
-
-              canvas.add(handle);
-              editHandles.current.push(handle);
-            };
-
-            if (type === 'M') {
-              spawnHandle(cmd[1], cmd[2], 'anchor', index);
-            } else if (type === 'L') {
-              spawnHandle(cmd[1], cmd[2], 'anchor', index);
-            } else if (type === 'C') {
-              spawnHandle(cmd[1], cmd[2], 'cp', index);
-              spawnHandle(cmd[3], cmd[4], 'cp', index);
-              spawnHandle(cmd[5], cmd[6], 'anchor', index);
-            } else if (type === 'Q') {
-              spawnHandle(cmd[1], cmd[2], 'cp', index);
-              spawnHandle(cmd[3], cmd[4], 'anchor', index);
-            }
-          });
+      const handleSelectionUpdated = (e: any) => {
+        const selected = e.selected?.[0];
+        // If selected is NOT a handle of ours
+        if (selected && !selected.isPathControl) {
+          setEditingPath(null);
         }
       };
 
-      spawnHandles();
+      canvas.on('selection:cleared', handleSelectionCleared);
+      canvas.on('selection:created', handleSelectionUpdated);
+      canvas.on('selection:updated', handleSelectionUpdated);
 
-      if (false) {
-        pathObj.path.forEach((cmd: any, index: number) => {
-          const type = cmd[0];
-          // Common helper to spawn handle
-          const spawnHandle = (x: number, y: number, role: 'anchor' | 'cp', cmdIndex: number) => {
-            // Subtract pathOffset before transforming to world space
-            const localPt = new fabric.Point(x - pathOffset.x, y - pathOffset.y);
-            const pt = fabric.util.transformPoint(localPt, matrix);
-
-            const handle = new fabric.Rect({
-              left: pt.x,
-              top: pt.y,
-              width: role === 'anchor' ? 10 : 8, // Smaller for CP
-              height: role === 'anchor' ? 10 : 8,
-              fill: role === 'anchor' ? 'yellow' : 'white',
-              stroke: '#3b82f6',
-              strokeWidth: 1,
-              radius: role === 'anchor' ? 0 : 4, // Pseudo-circle for CP if we used Rect with rx? 
-              // Actually Rect doesn't have radius for corner. rx/ry.
-              rx: role === 'anchor' ? 0 : 4,
-              ry: role === 'anchor' ? 0 : 4,
-              originX: 'center',
-              originY: 'center',
-              hasControls: false,
-              hasBorders: true,
-              lockRotation: true,
-              lockScalingX: true,
-              lockScalingY: true,
-              transparentCorners: false,
-              excludeFromExport: true
-            }) as any;
-
-            handle.isHandle = true;
-            handle.cmdIndex = cmdIndex;
-            handle.role = role;
-
-            handle.on('moving', () => updatePathFromHandles(pathObj));
-
-            // Double Click to Convert Corner <-> Curve
-            handle.on('mousedblclick', () => {
-              if (role !== 'anchor') return; // Only anchors convert
-
-              const currentCmd = pathObj.path![cmdIndex];
-              const newType = (currentCmd[0] === 'L' || currentCmd[0] === 'M') ? 'C' : 'L';
-
-              // M usually stays M, but can become C if it's the start? 
-              // In standard SVG, M is move. Convert to C means the *segment following it*? 
-              // No, internal Fabric logic usually treats M as just the start point. 
-              // If we want to curve the segment *ending* at this point, we modify THIS command.
-              // M cannot be C. M is just a point.
-              if (currentCmd[0] === 'M') return; // Can't convert start point type usually (it just moves)
-
-              if (newType === 'C') {
-                // Convert L to C
-                const currCmdAny = currentCmd as any[];
-                const currX = currCmdAny[currCmdAny.length - 2] as number;
-                const currY = currCmdAny[currCmdAny.length - 1] as number;
-
-                if (typeof currX !== 'number' || typeof currY !== 'number') return;
-
-                const cp1x = currX - 20;
-                const cp1y = currY;
-                const cp2x = currX - 10;
-                const cp2y = currY;
-
-                (pathObj.path as any)[cmdIndex] = ['C', cp1x, cp1y, cp2x, cp2y, currX, currY];
-
-              } else {
-                // Convert C/Q to L
-                const currCmdAny = currentCmd as any[];
-                const len = currCmdAny.length;
-                const x = currCmdAny[len - 2] as number;
-                const y = currCmdAny[len - 1] as number;
-                (pathObj.path as any)[cmdIndex] = ['L', x, y];
-              }
-
-              // Force update
-              pathObj.set({ path: [...pathObj.path!] }); // Trigger change
-              setEditingPath(null); // Hack to trigger re-render of handles?
-              // setEditingPath(pathObj) won't trigger useEffect if ref same?
-              // We need to re-run the effect.
-              // Let's create a refresh signal?
-              // Or just manually call the body of the effect?
-              // Simplest: 
-              setEditingPath(null);
-              setTimeout(() => setEditingPath(pathObj), 0);
-            });
-
-            canvas.add(handle);
-            editHandles.current.push(handle);
-          };
-
-          if (type === 'M') {
-            spawnHandle(cmd[1], cmd[2], 'anchor', index);
-          } else if (type === 'L') {
-            spawnHandle(cmd[1], cmd[2], 'anchor', index);
-          } else if (type === 'C') {
-            spawnHandle(cmd[1], cmd[2], 'cp', index); // cp1
-            spawnHandle(cmd[3], cmd[4], 'cp', index); // cp2
-            spawnHandle(cmd[5], cmd[6], 'anchor', index); // anchor
-          } else if (type === 'Q') {
-            spawnHandle(cmd[1], cmd[2], 'cp', index); // cp1
-            spawnHandle(cmd[3], cmd[4], 'anchor', index); // anchor
-          }
-        });
-      }
-
-      pathObj.selectable = false;
-      pathObj.evented = false;
-      pathObj.objectCaching = false;
-
-    } else {
-      clearHandles();
-
-      // Fix bounding box on exit by re-creating the path
-      if (prevEditingPathRef.current) {
-        const oldPath = prevEditingPathRef.current;
-        if (canvas.contains(oldPath) && oldPath.path) {
-          // 1. Calculate World Position of the first point (Anchor)
-          // We use the first point specifically to anchor the visual position
-          const pathData = oldPath.path;
-          const mCmd = pathData[0]; // M x y
-          const oldPathOffset = oldPath.pathOffset || { x: 0, y: 0 };
-
-          // Local point (taking into account the specific path offset of the old object)
-          const oldPointLocal = new fabric.Point((mCmd[1] as number) - (oldPathOffset?.x || 0), (mCmd[2] as number) - (oldPathOffset?.y || 0));
-          const oldMatrix = oldPath.calcTransformMatrix();
-          const oldPointWorld = fabric.util.transformPoint(oldPointLocal, oldMatrix);
-
-          // 2. Create New Path
-          const newPath = new fabric.Path(oldPath.path, {
-            stroke: oldPath.stroke,
-            strokeWidth: oldPath.strokeWidth,
-            fill: oldPath.fill,
-            strokeDashArray: oldPath.strokeDashArray,
-            strokeLineCap: oldPath.strokeLineCap,
-            strokeLineJoin: oldPath.strokeLineJoin,
-            strokeMiterLimit: oldPath.strokeMiterLimit,
-            opacity: oldPath.opacity,
-            scaleX: oldPath.scaleX,
-            scaleY: oldPath.scaleY,
-            angle: oldPath.angle,
-            flipX: oldPath.flipX,
-            flipY: oldPath.flipY,
-            skewX: oldPath.skewX,
-            skewY: oldPath.skewY,
-            originX: oldPath.originX,
-            originY: oldPath.originY,
-            objectCaching: true,
-            selectable: true,
-            evented: true
-          });
-
-          // 3. Calculate where that SAME point is in the New Object (at 0,0 world pos)
-          // New Path has recalculates its own pathOffset
-          const newPathOffset = newPath.pathOffset || { x: 0, y: 0 };
-          const newPointLocal = new fabric.Point((mCmd[1] as number) - (newPathOffset?.x || 0), (mCmd[2] as number) - (newPathOffset?.y || 0));
-
-          // Temporarily place at 0,0 to measure
-          newPath.left = 0;
-          newPath.top = 0;
-          const newMatrix = newPath.calcTransformMatrix();
-          const newPointWorldAtOrigin = fabric.util.transformPoint(newPointLocal, newMatrix);
-
-          // 4. Calculate Shift needed
-          // We want: Position + newPointWorldAtOrigin = oldPointWorld
-          // Position = oldPointWorld - newPointWorldAtOrigin
-          const left = oldPointWorld.x - newPointWorldAtOrigin.x;
-          const top = oldPointWorld.y - newPointWorldAtOrigin.y;
-
-          // 5. Apply Position
-          newPath.set({ left, top });
-          newPath.setCoords();
-
-          canvas.remove(oldPath);
-          canvas.add(newPath);
-          canvas.setActiveObject(newPath);
-          setSelectedObject(newPath);
-        }
-        prevEditingPathRef.current = null;
-      }
-
-      const objects = canvas.getObjects();
-      objects.forEach((o: any) => {
-        if (o.type === 'path' && !o.isDrawingPath && !o.isHandle) {
-          o.selectable = true;
-          o.evented = true;
-          o.objectCaching = true;
-        }
-      });
-      canvas.requestRenderAll();
+      return () => {
+        exitPathEditMode(pathObj, canvas);
+        canvas.off('selection:cleared', handleSelectionCleared);
+        canvas.off('selection:created', handleSelectionUpdated);
+        canvas.off('selection:updated', handleSelectionUpdated);
+        canvas.requestRenderAll();
+      };
     }
-  }, [editingPath]);
+  }, [editingPath, canvasRef.current]);
+
+
 
   // Global Double Click to Enter Edit Mode
   useEffect(() => {
@@ -922,6 +832,23 @@ function App() {
     // --- WORKSPACE & VIRTUAL PAGE INIT ---
     setupPage(canvas);
 
+    // RESTORE STATE IF REMOUNTED (e.g. HMR or Tab switch)
+    if (historyRef.current.length > 0 && historyIndexRef.current >= 0) {
+      console.log("Restoring Canvas Content from History...");
+      const state = historyRef.current[historyIndexRef.current];
+      canvas.loadFromJSON(JSON.parse(state)).then(() => {
+        canvas.renderAll();
+        // Important: Re-setup page property on the background rect if it gets lost or just ensure it's there
+        const objs = canvas.getObjects();
+        // @ts-ignore
+        const page = objs.find(o => o.width === PAGE_WIDTH && o.height === PAGE_HEIGHT);
+        if (page) (page as any).isPage = true;
+
+        console.log("Canvas Restored. Objects:", objs.length);
+        setLayers([...objs]);
+      });
+    }
+
     // 4. Center and Fit Page in Viewport
     // Initial calls
     handleFit();
@@ -988,9 +915,6 @@ function App() {
 
   }, [saveHistory, forceUpdate]);
 
-  const handleSelectionChange = useCallback((obj: fabric.Object | null) => {
-    setSelectedObject(obj);
-  }, []);
 
   const handlePropertyChange = useCallback((property: string, value: any) => {
     if (!canvasRef.current || !selectedObject) return;
@@ -1013,6 +937,22 @@ function App() {
     } else {
       // 1. Update Object Immediately (Visual Feedback)
       selectedObject.set(property, value);
+
+      // Special handling for Polygon Points (Star) to update dimensions
+      if (property === 'points' && selectedObject.type === 'polygon') {
+        const poly = selectedObject as fabric.Polygon;
+        // Force dimension recalculation so selection box matches new points
+        // @ts-ignore
+        const dims = poly._calcDimensions();
+        const center = poly.getCenterPoint();
+        poly.set({
+          width: dims.width,
+          height: dims.height,
+          pathOffset: { x: dims.left + dims.width / 2, y: dims.top + dims.height / 2 }
+        });
+        poly.setPositionByOrigin(center, 'center', 'center');
+        poly.setCoords();
+      }
     }
 
     canvasRef.current.requestRenderAll();
@@ -1093,13 +1033,11 @@ function App() {
         shape = new fabric.Line([0, 0, 100, 0], { ...defaults, strokeWidth: 3 });
         break;
       case 'star':
-        // 5-point star
-        // Simple polygon approximation
-        shape = new fabric.Polygon([
-          { x: 0, y: -50 }, { x: 11, y: -15 }, { x: 48, y: -15 }, { x: 18, y: 7 },
-          { x: 29, y: 41 }, { x: 0, y: 20 }, { x: -29, y: 41 }, { x: -18, y: 7 },
-          { x: -48, y: -15 }, { x: -11, y: -15 }
-        ], { ...defaults, left: 250, top: 250 });
+        const starPoints = getStarPoints(5, 50, 25); // 5 points, radius 50, inner 25 (0.5 ratio)
+        shape = new fabric.Polygon(starPoints, { ...defaults, left: 250, top: 250 });
+        (shape as any).isStar = true;
+        (shape as any).starPoints = 5;
+        (shape as any).starInnerRadiusRatio = 0.5;
         break;
       case 'arrow':
         // Simple arrow using Path
@@ -1306,6 +1244,17 @@ function App() {
     setCanPaste(true);
   }, []);
 
+  const handleCut = useCallback(async () => {
+    if (!canvasRef.current) return;
+    const activeObj = canvasRef.current.getActiveObject();
+    if (!activeObj) return;
+
+    // Copy first
+    await handleCopy();
+    // Then delete
+    handleDelete();
+  }, [handleCopy, handleDelete]);
+
   const handlePaste = useCallback(async () => {
     if (!canvasRef.current || !clipboard.current) return;
 
@@ -1466,6 +1415,23 @@ function App() {
     });
   }, []);
 
+  const handleSelectAll = useCallback(() => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+
+    // Get all non-page objects
+    const objects = canvas.getObjects().filter(obj => !(obj as any).isPage && !(obj as any).isHandle);
+
+    if (objects.length > 0) {
+      const selection = new fabric.ActiveSelection(objects, {
+        canvas: canvas
+      });
+      canvas.setActiveObject(selection);
+      canvas.requestRenderAll();
+      setSelectedObject(selection);
+    }
+  }, []);
+
   const handleZoomIn = useCallback(() => {
     if (!canvasRef.current) return;
     let zoom = canvasRef.current.getZoom();
@@ -1490,6 +1456,27 @@ function App() {
   const croppingImageRef = useRef<fabric.Image | null>(null);
   const originalImageStateRef = useRef<any>(null); // Store state before crop mode
 
+  // Handle Selection Change (Update UI from Object)
+  const handleSelectionChange = useCallback((obj: fabric.Object | null) => {
+    if (obj) {
+      setSelectedObject(obj);
+
+      // Sync Brush State from Object
+      const brushObj = obj as any;
+      if (brushObj.brushType) {
+        setBrushType(brushObj.brushType);
+        if (brushObj.strokeWidth) setBrushWidth(brushObj.strokeWidth);
+        if (brushObj.brushPatternScale) setBrushPatternScale(brushObj.brushPatternScale);
+        if (brushObj.brushTexture) setBrushTexture(brushObj.brushTexture);
+        if (typeof brushObj.stroke === 'string') {
+          setBrushColor(brushObj.stroke);
+        }
+      }
+    } else {
+      setSelectedObject(null);
+    }
+  }, []);
+
   const handleStartCrop = useCallback(() => {
     if (!canvasRef.current || !selectedObject || selectedObject.type !== 'image') return;
 
@@ -1512,8 +1499,8 @@ function App() {
     // 2. Get Natural Dimensions
     // img.getOriginalSize() might be available, or use element
     const element = img.getElement() as HTMLImageElement;
-    const naturalWidth = element.naturalWidth || element.width;
-    const naturalHeight = element.naturalHeight || element.height;
+    const naturalWidth = element?.naturalWidth || element?.width || 0;
+    const naturalHeight = element?.naturalHeight || element?.height || 0;
 
     // 3. Calculate where the *current* visible crop is relative to the full image
     const currentCropX = img.cropX || 0;
@@ -1918,6 +1905,140 @@ function App() {
     }
   }, [selectedObject, handleDelete, saveHistory]);
 
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      const isInput = activeElement?.tagName === 'INPUT' || activeElement?.tagName === 'TEXTAREA';
+
+      const activeObj = canvasRef.current?.getActiveObject();
+      // @ts-ignore
+      const isEditingText = activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text' || activeObj.type === 'textbox') && activeObj.isEditing;
+
+      if (isInput || isEditingText) {
+        // Don't trigger global shortcuts when editing text
+        // Exception: Tab (handled specifically)
+        if (e.key === 'Tab') {
+          const activeObj = canvasRef.current?.getActiveObject();
+          if (activeObj && activeObj.type === 'textbox') {
+            const textbox = activeObj as fabric.Textbox;
+            // @ts-ignore
+            if (textbox.isEditing) {
+              e.preventDefault(); // Stop focus change
+
+              // Manual insertion
+              const text = textbox.text || '';
+              const start = textbox.selectionStart || 0;
+              const end = textbox.selectionEnd || 0;
+              const newText = text.slice(0, start) + '\t' + text.slice(end);
+              textbox.set('text', newText);
+              textbox.selectionStart = start + 1;
+              textbox.selectionEnd = start + 1;
+              textbox.set('dirty', true);
+
+              canvasRef.current?.requestRenderAll();
+              saveHistory();
+            }
+          }
+        }
+        return;
+      }
+
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const cmdKey = isMac ? e.metaKey : e.ctrlKey;
+
+      // Delete / Backspace
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        handleDelete();
+      }
+
+      // Clipboard
+      if (cmdKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        handleCopy();
+      }
+      if (cmdKey && e.key.toLowerCase() === 'x') {
+        e.preventDefault();
+        handleCut();
+      }
+      if (cmdKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        handlePaste();
+      }
+
+      // History
+      if (cmdKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          redo();
+        } else {
+          undo();
+        }
+      }
+      if (cmdKey && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      }
+
+      // File
+      if (cmdKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+      if (cmdKey && e.key.toLowerCase() === 'o') {
+        e.preventDefault();
+        handleLoad();
+      }
+      if (cmdKey && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        handleNew();
+      }
+
+      // Selection & Grouping
+      if (cmdKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        handleSelectAll();
+      }
+      if (cmdKey && e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleUngroup();
+        } else {
+          handleGroup();
+        }
+      }
+
+      // Zoom
+      if (cmdKey && (e.key === '=' || e.key === '+')) {
+        e.preventDefault();
+        handleZoomIn();
+      }
+      if (cmdKey && e.key === '-') {
+        e.preventDefault();
+        handleZoomOut();
+      }
+      if (cmdKey && e.key === '0') {
+        e.preventDefault();
+        handleFit();
+      }
+
+      // Tool Switching (when not editing)
+      if (!cmdKey) {
+        if (e.key.toLowerCase() === 'v') setActiveTool('select');
+        if (e.key.toLowerCase() === 'h') setActiveTool('hand');
+        if (e.key.toLowerCase() === 'p') setActiveTool('pen');
+        if (e.key.toLowerCase() === 'b') setActiveTool('brush');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    handleDelete, handleCopy, handleCut, handlePaste, undo, redo,
+    handleSave, handleLoad, handleNew, handleSelectAll, handleGroup, handleUngroup,
+    handleZoomIn, handleZoomOut, handleFit, saveHistory
+  ]);
+
   const handleLayerSelect = (obj: fabric.Object) => {
     if (!canvasRef.current) return;
     canvasRef.current.setActiveObject(obj);
@@ -1963,6 +2084,104 @@ function App() {
     saveHistory();
   };
 
+  // GLOBAL CONTEXT MENU HANDLER (Fabric Event Based)
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+
+    const onMouseDown = (opt: any) => {
+      // Button 3 = Right Click
+      console.log("Global Mouse Down:", opt.button, opt.e.button);
+      if (opt.button === 3 || (opt.e && opt.e.button === 2)) {
+        opt.e.preventDefault(); // Prevent browser menu
+
+        // Explicitly select the target if one exists, ensuring context menu has valid context
+        if (opt.target) {
+          console.log("Right Click Target:", opt.target.type);
+          canvas.setActiveObject(opt.target);
+          canvas.requestRenderAll();
+        }
+
+        // Get exact pointer coordinates for menu position
+        const pointer = canvas.getPointer(opt.e);
+
+        // Because we set active object on mousedown in the handle itself (polyControlUtils),
+        // or via standard selection, getActiveObject() should be correct now.
+        // Refresh selection after manual set
+        const selection = canvas.getActiveObject();
+
+        const actions = [];
+
+        console.log("Selection:", selection ? selection.type : "none", "Target:", opt.target ? opt.target.type : "null");
+
+        // Reuse the action generation logic
+        if (selection) {
+          // Determine available actions based on selection
+          actions.push({ label: 'Copier', icon: <Copy size={16} />, action: handleCopy });
+          actions.push({ label: 'Supprimer', icon: <Trash2 size={16} />, danger: true, action: handleDelete });
+
+          // Z-Index
+          actions.push({ label: 'Premier Plan', icon: <BringToFront size={16} />, action: () => handleAction('bringToFront') });
+          actions.push({ label: 'Arrière Plan', icon: <SendToBack size={16} />, action: () => handleAction('sendToBack') });
+
+          // Path Handle Logic
+          if ((selection as any).isPathControl) {
+            const handle = selection as PathControlHandle;
+            if (handle.pathObj && handle.cmdIndex !== undefined) {
+              actions.push({
+                label: 'Convertir Ligne/Courbe',
+                icon: <PenTool size={16} />,
+                action: () => {
+                  if (handle.pathObj && handle.cmdIndex !== undefined && canvasRef.current) {
+                    togglePathPointType(handle.pathObj, handle.cmdIndex, canvasRef.current);
+                    saveHistory();
+                  }
+                }
+              });
+            }
+          }
+
+          // Grouping
+          if (selection.type === 'activeSelection') {
+            actions.push({ label: 'Grouper', icon: <Group size={16} />, action: handleGroup });
+          }
+          if (selection.type === 'group') {
+            actions.push({ label: 'Dégrouper', icon: <Ungroup size={16} />, action: handleUngroup });
+          }
+        } else {
+          actions.push({ label: 'Coller', icon: <StickyNote size={16} />, disabled: !canPaste, action: handlePaste });
+        }
+        console.log("Selection:", selection ? selection.type : "none", "Actions:", actions.length);
+
+        if (actions.length > 0) {
+          // Adjust for canvas position in page
+          // Use client coordinates directly for fixed positioning
+          const x = opt.e.clientX;
+          const y = opt.e.clientY;
+          console.log("Showing Context Menu at:", x, y);
+          setContextMenu({
+            visible: true,
+            x: x,
+            y: y,
+            actions: actions
+          });
+        } else {
+          console.log("No actions available for this context");
+        }
+      } else {
+        // Hide on left click
+        if (contextMenu.visible) {
+          setContextMenu(prev => ({ ...prev, visible: false }));
+        }
+      }
+    };
+
+    canvas.on('mouse:down', onMouseDown);
+    return () => {
+      canvas.off('mouse:down', onMouseDown);
+    };
+  }, [contextMenu.visible, handleCopy, handleDelete, handleGroup, handleUngroup, handlePaste, canPaste, saveHistory]);
+
   return (
     <div className="app-container" style={{
       display: 'flex',
@@ -1983,7 +2202,7 @@ function App() {
         justifyContent: 'space-between'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontWeight: 600, fontSize: '14px', marginRight: '16px' }}>Publisher X</span>
+          <span style={{ fontWeight: 600, fontSize: '14px', marginRight: '16px' }}>Simple Publisher</span>
 
           {/* Main Actions */}
           <div style={{ display: 'flex', gap: '4px' }}>
@@ -2127,8 +2346,32 @@ function App() {
           </button>
 
           <button
+            onClick={() => setActiveTool('pencil')}
+            title="Stylo (Dessin libre)"
+            style={{
+              padding: '8px',
+              borderRadius: '4px',
+              background: activeTool === 'pencil' ? 'var(--accent-color)' : 'transparent',
+              color: activeTool === 'pencil' ? '#fff' : 'inherit'
+            }}>
+            <Pencil size={20} />
+          </button>
+
+          <button
+            onClick={() => setActiveTool('brush')}
+            title="Pinceau (Avancé)"
+            style={{
+              padding: '8px',
+              borderRadius: '4px',
+              background: activeTool === 'brush' ? 'var(--accent-color)' : 'transparent',
+              color: activeTool === 'brush' ? '#fff' : 'inherit'
+            }}>
+            <Paintbrush size={20} />
+          </button>
+
+          <button
             onClick={() => setActiveTool('pen')}
-            title="Outil Plume (P)"
+            title="Plume (Bézier)"
             style={{
               padding: '8px',
               borderRadius: '4px',
@@ -2230,64 +2473,6 @@ function App() {
 
           {/* Canvas Cell */}
           <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
-            onContextMenu={(e) => {
-              e.preventDefault();
-              // Determine available actions based on selection
-              const selection = canvasRef.current?.getActiveObject();
-              const actions = [];
-
-              // Basic Actions
-              if (selection) {
-                actions.push({ label: 'Copier', icon: <Copy size={16} />, action: handleCopy });
-                actions.push({ label: 'Supprimer', icon: <Trash2 size={16} />, danger: true, action: handleDelete });
-
-                // Z-Index
-                actions.push({ label: 'Premier Plan', icon: <BringToFront size={16} />, action: () => handleAction('bringToFront') });
-                actions.push({ label: 'Arrière Plan', icon: <SendToBack size={16} />, action: () => handleAction('sendToBack') });
-
-                // Grouping
-                if (selection.type === 'activeSelection') {
-                  actions.push({ label: 'Grouper', icon: <Group size={16} />, action: handleGroup });
-                }
-                if (selection.type === 'group') {
-                  actions.push({ label: 'Dégrouper', icon: <Ungroup size={16} />, action: handleUngroup });
-                }
-                if (selection.type === 'textbox') {
-                  actions.push({
-                    label: 'Insérer Tabulation',
-                    icon: <AlignStartVertical size={16} />,
-                    action: () => {
-                      const tb = selection as fabric.Textbox;
-                      if (tb.isEditing) {
-                        // Manual insertion
-                        const text = tb.text || '';
-                        const start = tb.selectionStart || 0;
-                        const end = tb.selectionEnd || 0;
-                        const newText = text.slice(0, start) + '\t' + text.slice(end);
-                        tb.set('text', newText);
-                        tb.selectionStart = start + 1;
-                        tb.selectionEnd = start + 1;
-                        tb.set('dirty', true);
-                      } else {
-                        // If not editing, append to end
-                        const text = tb.text || '';
-                        const newText = text + '\t';
-                        tb.set('text', newText);
-                        tb.set('dirty', true);
-                      }
-                      canvasRef.current?.requestRenderAll();
-                      saveHistory();
-                    }
-                  });
-                }
-              } else {
-                actions.push({ label: 'Coller', icon: <StickyNote size={16} />, disabled: !canPaste, action: handlePaste });
-              }
-
-              if (actions.length > 0) {
-                setContextMenu({ x: e.clientX, y: e.clientY, visible: true, actions });
-              }
-            }}
             onClick={() => {
               if (contextMenu.visible) setContextMenu(prev => ({ ...prev, visible: false }));
             }}
@@ -2306,14 +2491,7 @@ function App() {
               </CanvasArea>
             </div>
 
-            {contextMenu.visible && (
-              <ContextMenu
-                x={contextMenu.x}
-                y={contextMenu.y}
-                options={contextMenu.actions}
-                onClose={() => setContextMenu(prev => ({ ...prev, visible: false }))}
-              />
-            )}
+
 
             {/* QR Code Modal (Simple Overlay) */}
             {showQRModal && (
@@ -2437,6 +2615,17 @@ function App() {
               onStartCrop={handleStartCrop}
               onApplyCrop={handleApplyCrop}
               onCancelCrop={handleCancelCrop}
+              // Drawing Props
+              activeTool={activeTool}
+              drawingSettings={{
+                brushType, setBrushType,
+                brushWidth, setBrushWidth,
+                brushColor, setBrushColor,
+                brushShadowColor, setBrushShadowColor,
+                brushShadowWidth, setBrushShadowWidth,
+                brushTexture, setBrushTexture,
+                brushPatternScale, setBrushPatternScale
+              }}
             />
               : activeTab === 'colors' ? (
                 <ColorPanel
@@ -2469,11 +2658,18 @@ function App() {
               )}
           </div>
         </div>
-
       </div>
+
+      {contextMenu.visible && (
+        <ContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          options={contextMenu.actions}
+          onClose={() => setContextMenu(prev => ({ ...prev, visible: false }))}
+        />
+      )}
     </div >
   );
 }
 
 export default App
-
