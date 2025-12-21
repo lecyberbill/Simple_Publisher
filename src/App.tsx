@@ -5,7 +5,7 @@ import {
   AlignStartVertical, AlignCenterVertical, AlignEndVertical,
   AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal,
   ZoomIn, ZoomOut, Maximize,
-  Star, QrCode
+  Star, QrCode, X
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import './App.css'
@@ -1125,6 +1125,25 @@ function App() {
     }
   }, [saveHistory]);
 
+  const handleClose = useCallback(() => {
+    if (!canvasRef.current) return;
+    if (confirm('Fermer le document en cours ? Tout travail non sauvegardé sera perdu.')) {
+      isInternalUpdate.current = true;
+      canvasRef.current.clear();
+      setupPage(canvasRef.current);
+      canvasRef.current.renderAll();
+      setSelectedObject(null);
+      setLayers([]);
+
+      historyRef.current = [];
+      historyIndexRef.current = -1;
+      isInternalUpdate.current = false;
+      setCurrentFilePath(null);
+
+      saveHistory();
+    }
+  }, [saveHistory]);
+
   const handleSave = useCallback(async () => {
     if (!canvasRef.current) return;
 
@@ -2214,6 +2233,9 @@ function App() {
             </button>
             <button onClick={handleLoad} title="Ouvrir" style={{ padding: '4px' }}>
               <FolderOpen size={18} />
+            </button>
+            <button onClick={handleClose} title="Fermer le document" style={{ padding: '4px', marginLeft: '4px', color: '#ff4d4f' }}>
+              <X size={18} />
             </button>
           </div>
 
