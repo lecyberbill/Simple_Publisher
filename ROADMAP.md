@@ -4,17 +4,26 @@ L'objectif de **Simple Publisher** est de rester l'outil le plus simple et acces
 
 ---
 
-## 🚀 Prochainement (V1.1 - V1.5)
+## ✅ Réalisé (V1.1.0)
 
 ### 📄 Gestion des Documents
-- **Multi-pages** : Possibilité d'ajouter plusieurs feuilles au même document (pour des brochures ou des menus).
-- **Multi-documents** : Travailler sur plusieurs fichiers en même temps avec un système d'onglets.
-- **Auto-sauvegarde** : Ne perdez plus jamais votre travail grâce à une sauvegarde automatique en arrière-plan.
+- **Multi-pages** : Possibilité d'ajouter plusieurs feuilles au même document.
+- **Auto-sauvegarde** : Ne perdez plus jamais votre travail.
+- **Guides Intelligents** : Alignement magnétique automatique.
+
+### 🎨 Modèles & Formats
+- **Templates (Modèles)** : Galerie de modèles (Cartes de visite, Réseaux Sociaux, A4/A5).
+- **Formats Dynamiques** : Support des dimensions personnalisées pour chaque projet (mm/px).
+- **Interface Simplifiée** : Nouvelle fenêtre de création avec catégories visuelles.
+
+## 🚀 Prochainement (V1.2 - V1.5)
 
 ### 🎯 Aide à la Création
-- **Guides Intelligents (Smart Guides)** : Les objets "s'aimantent" automatiquement pour être parfaitement alignés.
-- **Templates (Modèles)** : Une galerie de modèles prêts à l'emploi (Cartes de visite, Flyers, Menus de restaurant).
-- **Bibliothèque d'Actifs** : Un catalogue intégré d'icônes gratuites et de formes décoratives.
+- **Bibliothèque d'Actifs** : Un catalogue intégré d'icônes gratuites et de formes décoratives (cœurs, flèches, emojis).
+- **Impression Directe** : Lancer l'impression directement depuis l'application sans export PDF préalable.
+
+### 🖋 Typographie Avancée (V2.0)
+- **Texte sur Courbe** : Écrire du texte suivant une ligne ondulée ou un cercle.
 
 ---
 

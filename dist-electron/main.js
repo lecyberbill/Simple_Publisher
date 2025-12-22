@@ -62,7 +62,7 @@ function createWindow() {
             contextIsolation: true,
             nodeIntegration: false,
         },
-        title: "Simple PAO",
+        title: "simple-publisher",
         icon: path_1.default.join(__dirname, '../public/icon.png') // TODO: Add icon
     });
     // Check if we are in dev mode (Vite typically runs on localhost:5173)

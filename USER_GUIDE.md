@@ -40,9 +40,19 @@ Simple Publisher offers three ways to draw by hand:
 - **Brush Tool**: For textured effects and patterns (dots, lines, diamonds).
 - **Pen Tool (Bezier)**: For creating custom shapes point by point. Double-click a point to turn it into a curve!
 
+### Smart Guides
+When you move objects, magenta lines will appear to help you align them with other objects or the center of the page.
+- **Magnet Button**: Toggle this feature on/off using the magnet icon in the toolbar.
+
 ---
 
-## 📦 4. Organizing Your Document
+## 📦 4. Managing Pages
+Simple Publisher now supports multi-page documents!
+- **Add Page**: Click the **"Add Page"** button at the bottom of the screen.
+- **Switch Page**: Click on the thumbnail of the page you want to edit.
+- **Delete Page**: Click the trash icon on a page thumbnail to remove it.
+
+## 📦 5. Organizing Your Document
 
 ### Layers
 Imagine your objects are stacked transparent sheets.
@@ -57,9 +67,10 @@ If you've created a logo with several shapes and text:
 
 ---
 
-## 💾 5. Saving and Sharing
+## 💾 6. Saving and Sharing
 
-- **Save**: Click the floppy disk icon at the top to save your work and pick it up later.
+- **Save**: Click the floppy disk icon at the top (or `Ctrl+S`).
+- **Auto-Save**: Once you've saved your file for the first time, Simple Publisher will automatically save your changes every time you stop working for 2 seconds. Look for the "Enregistré" indicator at the top right!
 - **Export as Image (PNG)**: To share your creation on social media or via email.
 - **Export as PDF**: Ideal for high-quality printing.
 

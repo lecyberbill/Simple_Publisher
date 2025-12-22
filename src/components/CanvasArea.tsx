@@ -41,6 +41,7 @@ export const CanvasArea = ({ onCanvasReady, onSelectionChange, children }: Canva
                     canvasInstance.current.setDimensions({ width, height });
                     canvasInstance.current.requestRenderAll();
                     // Notify App component to re-center
+                    // @ts-ignore
                     canvasInstance.current.fire('resize', { width, height });
                 }
             }

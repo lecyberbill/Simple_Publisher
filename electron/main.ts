@@ -17,7 +17,7 @@ function createWindow() {
             contextIsolation: true,
             nodeIntegration: false,
         },
-        title: "Simple PAO",
+        title: "simple-publisher",
         icon: path.join(__dirname, '../public/icon.png') // TODO: Add icon
     });
 

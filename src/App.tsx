@@ -20,6 +20,13 @@ import { Ruler } from './components/Ruler';
 import { ColorPanel } from './components/ColorPanel';
 import { enterPathEditMode, exitPathEditMode, togglePathPointType, getStarPoints } from './utils/polyControlUtils';
 import type { PathControlHandle } from './utils/polyControlUtils';
+import { initAligningGuidelines } from './utils/snappingHelpers';
+import { Magnet, BookOpen } from 'lucide-react'; // Magnet for Snap Toggle
+import { TemplateModal } from './components/TemplateModal';
+import type { Template } from './templates/data';
+import { AssetLibraryPanel } from './components/AssetLibraryPanel';
+import { renderToStaticMarkup } from 'react-dom/server';
+import * as LucideIcons from 'lucide-react';
 
 // ... (existing imports)
 
@@ -30,8 +37,12 @@ import { patchFabricTextRender } from './utils/fabricUtils';
 // Apply custom patches to Fabric.js prototypes (Background, Border, Alignment, Tabs)
 patchFabricTextRender();
 
-const PAGE_WIDTH = 794;
-const PAGE_HEIGHT = 1123;
+// Default Page Size
+// const PAGE_WIDTH = 794;
+// const PAGE_HEIGHT = 1123;
+// We now support dynamic sizes, defaults kept for fallback
+const DEFAULT_PAGE_WIDTH = 794;
+const DEFAULT_PAGE_HEIGHT = 1123;
 
 const CANVAS_EXPORT_PROPERTIES = [
   'id',
@@ -76,6 +87,8 @@ interface Page {
   id: string;
   canvasObjects: any;
   thumbnail: string;
+  width: number;
+  height: number;
 }
 
 function App() {
@@ -87,10 +100,23 @@ function App() {
   const [paletteGradients, setPaletteGradients] = useState<any[]>([]);
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  /* Auto-Save Effect Moved Later */
+
+  const [snapEnabled, setSnapEnabled] = useState(true); // Snap state
+  const snapEnabledRef = useRef(true); // Ref for performance in event handlers
+
+  // Sync state to ref
+  useEffect(() => {
+    snapEnabledRef.current = snapEnabled;
+  }, [snapEnabled]);
 
   // Multi-page State
   const [pages, setPages] = useState<Page[]>([
-    { id: 'initial', canvasObjects: null, thumbnail: '' }
+    { id: 'initial', canvasObjects: null, thumbnail: '', width: DEFAULT_PAGE_WIDTH, height: DEFAULT_PAGE_HEIGHT }
   ]);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const currentPageIndexRef = useRef(0);
@@ -117,6 +143,7 @@ function App() {
   const isInternalUpdate = useRef(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
 
   // Clipboard
   const clipboard = useRef<fabric.Object | null>(null);
@@ -182,7 +209,7 @@ function App() {
     return patternCanvas;
   }, []);
 
-  const setupPage = (canvas: fabric.Canvas) => {
+  const setupPage = (canvas: fabric.Canvas, width: number = DEFAULT_PAGE_WIDTH, height: number = DEFAULT_PAGE_HEIGHT) => {
     // workspace background
     canvas.backgroundColor = '#f0f0f0';
 
@@ -197,8 +224,8 @@ function App() {
     const pageObject = new fabric.Rect({
       left: 0,
       top: 0,
-      width: PAGE_WIDTH,
-      height: PAGE_HEIGHT,
+      width: width,
+      height: height,
       fill: '#ffffff', // Always white, not transparent
       shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 10, offsetX: 5, offsetY: 5 }),
       selectable: false,
@@ -292,7 +319,9 @@ function App() {
       const newPage: Page = {
         id: generateId(),
         canvasObjects: null,
-        thumbnail: ''
+        thumbnail: '',
+        width: prevPages[currentIndex]?.width || DEFAULT_PAGE_WIDTH,
+        height: prevPages[currentIndex]?.height || DEFAULT_PAGE_HEIGHT
       };
 
       const newPages = [...updatedPages, newPage];
@@ -301,7 +330,7 @@ function App() {
       // Canvas cleanup
       isInternalUpdate.current = true;
       canvasRef.current!.clear();
-      setupPage(canvasRef.current!);
+      setupPage(canvasRef.current!, newPage.width, newPage.height);
       canvasRef.current!.renderAll();
       isInternalUpdate.current = false;
 
@@ -373,7 +402,7 @@ function App() {
     if (targetPage.canvasObjects) {
       await canvasRef.current.loadFromJSON(targetPage.canvasObjects);
     }
-    setupPage(canvasRef.current);
+    setupPage(canvasRef.current, targetPage.width, targetPage.height);
     canvasRef.current.renderAll();
 
     // Finalize state update
@@ -1114,6 +1143,10 @@ function App() {
     // --- WORKSPACE & VIRTUAL PAGE INIT ---
     setupPage(canvas);
 
+    // --- SMART GUIDES INIT ---
+    // @ts-ignore
+    initAligningGuidelines(canvas, () => snapEnabledRef.current);
+
     // RESTORE STATE IF REMOUNTED (e.g. HMR or Tab switch)
     if (historyRef.current.length > 0 && historyIndexRef.current >= 0) {
       console.log("Restoring Canvas Content from History...");
@@ -1123,8 +1156,17 @@ function App() {
         // Important: Re-setup page property on the background rect if it gets lost or just ensure it's there
         const objs = canvas.getObjects();
         // @ts-ignore
-        const page = objs.find(o => o.width === PAGE_WIDTH && o.height === PAGE_HEIGHT);
-        if (page) (page as any).isPage = true;
+        const page = objs.find(o => (o as any).isPage);
+        if (page) {
+          (page as any).isPage = true;
+          // Ensure it's back
+          canvas.sendObjectToBack(page);
+        } else {
+          // If lost, restore A4? Or assume standard? 
+          // Ideally we should know the size from the page state...
+          // For simplify, recreate A4 if missing in restore.
+          setupPage(canvas, DEFAULT_PAGE_WIDTH, DEFAULT_PAGE_HEIGHT);
+        }
 
         console.log("Canvas Restored. Objects:", objs.length);
         setLayers([...objs]);
@@ -1389,39 +1431,24 @@ function App() {
   }, []);
 
   const handleNew = useCallback(() => {
-    if (!canvasRef.current) return;
     if (confirm('Voulez-vous vraiment créer un nouveau projet ? Tout travail non sauvegardé sera perdu.')) {
-      isInternalUpdate.current = true;
-      canvasRef.current.clear();
-      setupPage(canvasRef.current);
-      canvasRef.current.renderAll();
-      setSelectedObject(null);
-      setLayers([]);
-
-      setPages([{ id: 'initial', canvasObjects: null, thumbnail: '' }]);
-      setCurrentPageIndex(0);
-      currentPageIndexRef.current = 0;
-
-      historyRef.current = [];
-      historyIndexRef.current = -1;
-      isInternalUpdate.current = false;
-      setCurrentFilePath(null);
-
-      saveHistory();
+      setShowTemplateModal(true);
     }
-  }, [saveHistory]);
+  }, []);
+
+
 
   const handleClose = useCallback(() => {
     if (!canvasRef.current) return;
     if (confirm('Fermer le document en cours ? Tout travail non sauvegardé sera perdu.')) {
       isInternalUpdate.current = true;
       canvasRef.current.clear();
-      setupPage(canvasRef.current);
+      setupPage(canvasRef.current, DEFAULT_PAGE_WIDTH, DEFAULT_PAGE_HEIGHT);
       canvasRef.current.renderAll();
       setSelectedObject(null);
       setLayers([]);
 
-      setPages([{ id: 'initial', canvasObjects: null, thumbnail: '' }]);
+      setPages([{ id: 'initial', canvasObjects: null, thumbnail: '', width: DEFAULT_PAGE_WIDTH, height: DEFAULT_PAGE_HEIGHT }]);
       setCurrentPageIndex(0);
       currentPageIndexRef.current = 0;
 
@@ -1472,6 +1499,43 @@ function App() {
     }
   }, [paletteColors, paletteGradients, currentFilePath, pages, currentPageIndex]);
 
+  const isFirstRender = useRef(true);
+
+  // Auto-Save Effect & Unsaved Change Detection
+  useEffect(() => {
+    // Skip first render
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    // 1. Mark as unsaved immediately when Content Changes
+    setSaveStatus('unsaved');
+
+    // 2. Auto-Save Logic (Only IF we have a file path)
+    if (!currentFilePath) return;
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      setSaveStatus('saving');
+      await handleSave();
+      setSaveStatus('saved');
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [pages, paletteColors, paletteGradients]); // Removed handleSave from dep to avoid cycles if any
+
+  // Prevent closing with unsaved changes - REMOVED for now
+  /* useEffect(() => {
+    ...
+  }, [saveStatus]); */
+
+
   const handleLoad = useCallback(async () => {
     if (!canvasRef.current) return;
     if (window.electronAPI) {
@@ -1504,7 +1568,9 @@ function App() {
             restoredPages = [{
               id: 'legacy-' + generateId(),
               canvasObjects: canvasData,
-              thumbnail: ''
+              thumbnail: '',
+              width: DEFAULT_PAGE_WIDTH,
+              height: DEFAULT_PAGE_HEIGHT
             }];
             restoredIndex = 0;
           }
@@ -1519,7 +1585,7 @@ function App() {
             await canvasRef.current.loadFromJSON(targetPage.canvasObjects);
           }
 
-          setupPage(canvasRef.current);
+          setupPage(canvasRef.current, targetPage.width, targetPage.height);
           canvasRef.current.renderAll();
           setLayers([...canvasRef.current.getObjects().filter(o => !(o as any).isPage)]);
 
@@ -1728,8 +1794,12 @@ function App() {
       const availableW = wrapperW - padding * 2;
       const availableH = wrapperH - padding * 2;
 
-      const scaleX = availableW / PAGE_WIDTH;
-      const scaleY = availableH / PAGE_HEIGHT;
+      const activePage = pages[currentPageIndexRef.current];
+      const targetWidth = activePage ? activePage.width : DEFAULT_PAGE_WIDTH;
+      const targetHeight = activePage ? activePage.height : DEFAULT_PAGE_HEIGHT;
+
+      const scaleX = availableW / targetWidth;
+      const scaleY = availableH / targetHeight;
       let zoom = Math.min(scaleX, scaleY);
 
       // Ensure reasonable zoom limits
@@ -1740,12 +1810,39 @@ function App() {
       if (!vpt) return;
 
       canvas.setZoom(zoom);
-      vpt[4] = (wrapperW - PAGE_WIDTH * zoom) / 2;
-      vpt[5] = (wrapperH - PAGE_HEIGHT * zoom) / 2;
+      vpt[4] = (wrapperW - targetWidth * zoom) / 2;
+      vpt[5] = (wrapperH - targetHeight * zoom) / 2;
 
       canvas.requestRenderAll();
     });
-  }, []);
+  }, [pages]);
+
+  const handleLoadTemplate = useCallback((template: Template) => {
+    if (!canvasRef.current) return;
+
+    setShowTemplateModal(false);
+
+    isInternalUpdate.current = true;
+    canvasRef.current.clear();
+    setupPage(canvasRef.current, template.width, template.height);
+    canvasRef.current.renderAll();
+    setSelectedObject(null);
+    setLayers([]);
+
+    setPages([{ id: 'initial', canvasObjects: null, thumbnail: '', width: template.width, height: template.height }]);
+    setCurrentPageIndex(0);
+    currentPageIndexRef.current = 0;
+
+    historyRef.current = [];
+    historyIndexRef.current = -1;
+    isInternalUpdate.current = false;
+    setCurrentFilePath(null);
+
+    // Fit to new size
+    setTimeout(handleFit, 100);
+
+    saveHistory();
+  }, [saveHistory, handleFit]);
 
   const handleSelectAll = useCallback(() => {
     if (!canvasRef.current) return;
@@ -2018,9 +2115,9 @@ function App() {
 
       const svgString = canvasRef.current.toSVG({
         suppressPreamble: true,
-        width: String(PAGE_WIDTH),
-        height: String(PAGE_HEIGHT),
-        viewBox: { x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT }
+        width: String(pageState.width || DEFAULT_PAGE_WIDTH),
+        height: String(pageState.height || DEFAULT_PAGE_HEIGHT),
+        viewBox: { x: 0, y: 0, width: pageState.width || DEFAULT_PAGE_WIDTH, height: pageState.height || DEFAULT_PAGE_HEIGHT }
       });
 
       const parser = new DOMParser();
@@ -2034,7 +2131,10 @@ function App() {
     if (targetPage.canvasObjects) {
       await canvasRef.current.loadFromJSON(targetPage.canvasObjects);
     }
-    setupPage(canvasRef.current);
+    if (targetPage.canvasObjects) {
+      await canvasRef.current.loadFromJSON(targetPage.canvasObjects);
+    }
+    setupPage(canvasRef.current, targetPage.width, targetPage.height);
     canvasRef.current.backgroundColor = originalBg;
 
     if (activeObj) {
@@ -2049,6 +2149,56 @@ function App() {
     }
   }, [pages, currentPageIndex]);
 
+
+  const handleAddLibraryShape = useCallback((shapeDef: any) => {
+    if (!canvasRef.current) return;
+
+    const path = new fabric.Path(shapeDef.path, {
+      left: 300, top: 300,
+      fill: shapeDef.fill || '#cccccc', // Default gray if no fill
+      stroke: shapeDef.stroke || (shapeDef.fill ? 'none' : '#000000'),
+      strokeWidth: shapeDef.strokeWidth || 0,
+      objectCaching: false
+    });
+
+    if (path.width && path.width > 0) {
+      const scale = 100 / path.width;
+      path.scale(scale);
+    }
+
+    (path as any).uid = generateId();
+    canvasRef.current.add(path);
+    canvasRef.current.setActiveObject(path);
+    saveHistory();
+  }, [saveHistory]);
+
+  const handleAddLibraryIcon = useCallback(async (iconName: string) => {
+    if (!canvasRef.current) return;
+
+    // @ts-ignore
+    const IconComponent = LucideIcons[iconName];
+    if (!IconComponent) return;
+
+    try {
+      const svgString = renderToStaticMarkup(<IconComponent size={100} color="#000000" />);
+      const { objects, options } = await fabric.loadSVGFromString(svgString);
+
+      if (objects && objects.length > 0) {
+        const validObjects = objects.filter((o): o is fabric.Object => o !== null);
+        if (validObjects.length === 0) return;
+        const obj = fabric.util.groupSVGElements(validObjects, options);
+        obj.set({ left: 300, top: 300 });
+        (obj as any).uid = generateId();
+        canvasRef.current.add(obj);
+        canvasRef.current.setActiveObject(obj);
+        saveHistory();
+        canvasRef.current.requestRenderAll();
+      }
+    } catch (e) {
+      console.error("Failed to load icon", e);
+    }
+  }, [saveHistory]);
+
   // --- Alignment Logic ---
   // --- Alignment Logic (Align to Page) ---
   const handleAlign = useCallback((alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
@@ -2059,8 +2209,8 @@ function App() {
     // Find Page Dimensions dynamically
     // @ts-ignore
     const pageObj = canvasRef.current.getObjects().find(o => o.isPage) as fabric.Rect;
-    const pageWidth = pageObj ? pageObj.width! : PAGE_WIDTH;
-    const pageHeight = pageObj ? pageObj.height! : PAGE_HEIGHT;
+    const pageWidth = pageObj ? pageObj.width! : DEFAULT_PAGE_WIDTH;
+    const pageHeight = pageObj ? pageObj.height! : DEFAULT_PAGE_HEIGHT;
 
     const r = activeObj.getBoundingRect();
     const w = r.width;
@@ -2620,9 +2770,39 @@ function App() {
             <button onClick={() => handleAlign('middle')} title="Centrer Vert (Page)" style={{ padding: '4px' }}><AlignCenterHorizontal size={18} /></button>
             <button onClick={() => handleAlign('bottom')} title="Aligner Bas (Page)" style={{ padding: '4px' }}><AlignEndHorizontal size={18} /></button>
           </div>
+
+          <div style={{ width: '1px', height: '20px', background: 'var(--border-color)', margin: '0 8px' }}></div>
+
+          {/* Snapping Toggle */}
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button
+              onClick={() => setSnapEnabled(!snapEnabled)}
+              title={snapEnabled ? "Désactiver Aimantation" : "Activer Aimantation"}
+              style={{ padding: '4px', background: snapEnabled ? 'rgba(0,0,0,0.1)' : 'transparent', color: snapEnabled ? 'var(--accent-color)' : 'currentColor' }}
+            >
+              <Magnet size={18} />
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Auto-Save Status */}
+          {currentFilePath && (
+            <div style={{
+              fontSize: '11px',
+              color: saveStatus === 'unsaved' ? 'var(--text-muted)' :
+                saveStatus === 'saving' ? 'var(--accent-color)' : '#4caf50',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              width: '80px',
+              justifyContent: 'flex-end'
+            }}>
+              {saveStatus === 'saving' ? 'Sauvegarde...' :
+                saveStatus === 'saved' ? 'Enregistré' : 'Modifié'}
+            </div>
+          )}
+
           {/* Export Actions */}
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
@@ -2721,6 +2901,22 @@ function App() {
 
           <div style={{ width: '20px', height: '1px', background: 'var(--border-color)' }}></div>
 
+          <button
+            onClick={() => setShowLibrary(!showLibrary)}
+            title="Bibliothèque d'actifs"
+            style={{
+              padding: '8px',
+              borderRadius: '4px',
+              background: showLibrary ? 'var(--accent-color)' : 'transparent',
+              color: showLibrary ? '#fff' : 'inherit'
+            }}>
+            <BookOpen size={20} />
+          </button>
+
+
+
+          <div style={{ width: '20px', height: '1px', background: 'var(--border-color)' }}></div>
+
           <button onClick={addText} title="Texte" style={{ padding: '8px' }}>
             <Type size={20} />
           </button>
@@ -2784,6 +2980,14 @@ function App() {
             onChange={handleImageUpload}
           />
         </div>
+
+        {/* Asset Library Panel */}
+        <AssetLibraryPanel
+          isOpen={showLibrary}
+          onClose={() => setShowLibrary(false)}
+          onAddShape={handleAddLibraryShape}
+          onAddIcon={handleAddLibraryIcon}
+        />
 
         {/* Center Canvas Area with Rulers */}
         <div style={{
@@ -2860,64 +3064,71 @@ function App() {
                 <span>AJOUTER</span>
               </button>
             </div>
-
-            {/* QR Code Modal (Simple Overlay) */}
-            {showQRModal && (
-              <div style={{
-                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 2000
-              }}>
-                <div style={{
-                  background: 'var(--bg-panel)', padding: '20px', borderRadius: '8px',
-                  border: '1px solid var(--border-color)', minWidth: '300px',
-                  display: 'flex', flexDirection: 'column', gap: '10px'
-                }}>
-                  <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Générer un QR Code</h3>
-                  <input
-                    type="text"
-                    placeholder="https://example.com"
-                    autoFocus
-                    id="qr-input"
-                    style={{ padding: '8px', background: 'var(--bg-canvas)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '4px' }}
-                  />
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <label style={{ color: 'var(--text-primary)', fontSize: '14px' }}>Couleur:</label>
-                    <input
-                      type="color"
-                      id="qr-color"
-                      defaultValue="#000000"
-                      style={{ border: 'none', padding: 0, width: '30px', height: '30px', cursor: 'pointer', background: 'transparent' }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '10px' }}>
-                    <button
-                      onClick={() => setShowQRModal(false)}
-                      style={{ padding: '6px 12px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '4px', cursor: 'pointer' }}
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      onClick={() => {
-                        const input = document.getElementById('qr-input') as HTMLInputElement;
-                        const colorInput = document.getElementById('qr-color') as HTMLInputElement;
-                        if (input && input.value) {
-                          handleConfirmQRCode(input.value, colorInput?.value || '#000000');
-                          setShowQRModal(false);
-                        }
-                      }}
-                      style={{ padding: '6px 12px', background: 'var(--accent-color)', border: 'none', color: 'white', borderRadius: '4px', cursor: 'pointer' }}
-                    >
-                      Générer
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Right Sidebar (Properties) */}
+        {/* QR Code Modal (Simple Overlay) */}
+        {showQRModal && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 2000
+          }}>
+            <div style={{
+              background: 'var(--bg-panel)', padding: '20px', borderRadius: '8px',
+              border: '1px solid var(--border-color)', minWidth: '300px',
+              display: 'flex', flexDirection: 'column', gap: '10px'
+            }}>
+              <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Générer un QR Code</h3>
+              <input
+                type="text"
+                placeholder="https://example.com"
+                autoFocus
+                id="qr-input"
+                style={{ padding: '8px', background: 'var(--bg-canvas)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '4px' }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <label style={{ color: 'var(--text-primary)', fontSize: '14px' }}>Couleur:</label>
+                <input
+                  type="color"
+                  id="qr-color"
+                  defaultValue="#000000"
+                  style={{ border: 'none', padding: 0, width: '30px', height: '30px', cursor: 'pointer', background: 'transparent' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <button
+                  onClick={() => setShowQRModal(false)}
+                  style={{ padding: '6px 12px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => {
+                    const input = document.getElementById('qr-input') as HTMLInputElement;
+                    const colorInput = document.getElementById('qr-color') as HTMLInputElement;
+                    if (input && input.value) {
+                      handleConfirmQRCode(input.value, colorInput?.value || '#000000');
+                      setShowQRModal(false);
+                    }
+                  }}
+                  style={{ padding: '6px 12px', background: 'var(--accent-color)', border: 'none', color: 'white', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  Générer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Template Modal */}
+        {showTemplateModal && (
+          <TemplateModal
+            onSelect={handleLoadTemplate}
+            onClose={() => setShowTemplateModal(false)}
+          />
+        )}
+
+
         <div style={{
           width: '280px',
           minWidth: '280px', // Prevent shrinking

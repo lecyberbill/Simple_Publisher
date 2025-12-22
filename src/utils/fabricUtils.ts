@@ -9,7 +9,7 @@ import * as fabric from 'fabric';
  */
 export const patchFabricTextRender = () => {
     // Helper to apply patch to a prototype
-    const applyPatch = (prototype: any, name: string) => {
+    const applyPatch = (prototype: any, _name: string) => {
         if (!prototype) return;
         // Ensure we don't apply twice if HMR re-runs, though overriding is mostly safe
         if (prototype._patchedRenderBackground) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { BringToFront, SendToBack, Group, Ungroup, Trash2, Copy, StickyNote } from 'lucide-react';
+
 
 interface ContextMenuProps {
     x: number;

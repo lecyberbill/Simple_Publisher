@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import * as fabric from 'fabric';
-import { Plus, Trash2, Check, Crosshair, Circle as CircleIcon, Square } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, Trash2, Circle as CircleIcon, Square } from 'lucide-react';
 
 interface ColorPanelProps {
     colors: string[];

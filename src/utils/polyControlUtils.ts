@@ -83,7 +83,7 @@ export const enterPathEditMode = (pathObj: fabric.Path, canvas: fabric.Canvas) =
                 }
             });
 
-            handle.on('moving', (e) => {
+            handle.on('moving', (_e) => {
                 const newPos = handle.getCenterPoint();
 
                 // Convert Canvas Coordinate -> Local Path Coordinate

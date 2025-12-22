@@ -1,4 +1,4 @@
-import React from 'react';
+
 import * as fabric from 'fabric';
 import { Eye, EyeOff, Lock, Unlock, Image as ImageIcon, Type, Square, MousePointer2, GripVertical } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';

@@ -68,5 +68,16 @@ A simple, beginner-friendly, and offline-first Desktop Publishing (PAO) applicat
    npm run build:electron
    ```
 
-## 📜 License
+## � Credits & Attributions
+
+This project uses external resources to provide high-quality assets:
+
+*   **[Open Iconic](https://github.com/iconic/open-iconic)**: An open source icon set with 223 marks in SVG, webfont and raster formats.
+    *   *License*: MIT (Code) / SIL OFL 1.1 (Fonts) / CC BY-SA 4.0 (Icons).
+    *   Used for the "Open Iconic" shape category.
+*   **[Lucide React](https://lucide.dev/)**: Beautiful & consistent icon toolkit made by the community.
+    *   *License*: ISC.
+    *   Used for the "Icons" tab.
+
+## �📜 License
 MIT
