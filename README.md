@@ -1,6 +1,7 @@
 # Simple Publisher
 
 A simple, beginner-friendly, and offline-first Desktop Publishing (PAO) application built with Electron, React, and Fabric.js.
+<img width="1440" height="1084" alt="image" src="https://github.com/user-attachments/assets/91bc8f21-7c59-4f21-8d49-dc59f1bfb275" />
 
 > [!TIP]
 > **Nouveau sur Simple Publisher ?** Consultez notre [Guide Utilisateur](file:///d:/image_to_text/Simple_PAO/GUIDE_UTILISATEUR.md) | **New to Simple Publisher?** Check out our [User Guide](file:///d:/image_to_text/Simple_PAO/USER_GUIDE.md)
