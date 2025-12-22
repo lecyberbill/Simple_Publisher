@@ -33,6 +33,29 @@ patchFabricTextRender();
 const PAGE_WIDTH = 794;
 const PAGE_HEIGHT = 1123;
 
+const CANVAS_EXPORT_PROPERTIES = [
+  'id',
+  'uid',
+  'isPage',
+  'locked',
+  'selectable',
+  'evented',
+  'hoverCursor',
+  'excludeFromExport',
+  'brushType',
+  'brushPatternScale',
+  'verticalAlign',
+  'tabs',
+  'underlineOffset',
+  'boxBorderColor',
+  'boxBorderWidth',
+  'starPoints',
+  'starInnerRadiusRatio',
+  'isStar',
+  'rx',
+  'ry'
+];
+
 // Helper Component for Arrow Icon if needed, or use lucide ArrowRight
 import { ArrowRight } from 'lucide-react';
 const ArrowRightIconWrapper = () => <ArrowRight size={16} />;
@@ -49,6 +72,12 @@ const shapeBtnStyle: React.CSSProperties = {
   alignItems: 'center'
 };
 
+interface Page {
+  id: string;
+  canvasObjects: any;
+  thumbnail: string;
+}
+
 function App() {
   const [fonts, setFonts] = useState<string[]>([]);
   const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
@@ -58,6 +87,14 @@ function App() {
   const [paletteGradients, setPaletteGradients] = useState<any[]>([]);
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
+
+  // Multi-page State
+  const [pages, setPages] = useState<Page[]>([
+    { id: 'initial', canvasObjects: null, thumbnail: '' }
+  ]);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const currentPageIndexRef = useRef(0);
+
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, visible: boolean, actions: any[] }>({ x: 0, y: 0, visible: false, actions: [] });
 
   // Drawing State
@@ -149,11 +186,12 @@ function App() {
     // workspace background
     canvas.backgroundColor = '#f0f0f0';
 
-    // Ensure no existing page
+    // Ensure no existing page - Remove duplicates
     const objects = canvas.getObjects();
-    // @ts-ignore
-    const existingPage = objects.find(o => o.isPage);
-    if (existingPage) return; // Already exists
+    const existingPages = objects.filter(o => (o as any).isPage);
+    if (existingPages.length > 0) {
+      existingPages.forEach(p => canvas.remove(p));
+    }
 
     // Create Page Object
     const pageObject = new fabric.Rect({
@@ -161,7 +199,7 @@ function App() {
       top: 0,
       width: PAGE_WIDTH,
       height: PAGE_HEIGHT,
-      fill: '#ffffff',
+      fill: '#ffffff', // Always white, not transparent
       shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.3)', blur: 10, offsetX: 5, offsetY: 5 }),
       selectable: false,
       evented: false,
@@ -189,20 +227,239 @@ function App() {
 
   const saveHistory = useCallback(() => {
     if (!canvasRef.current || isInternalUpdate.current) return;
-    // VERY IMPORTANT: Include 'uid' in serialization so IDs persist!
+
+    // Use REF for sync access to current page index
+    const currentIndex = currentPageIndexRef.current;
+
+    // Capture current canvas state
     // @ts-ignore
-    const json = JSON.stringify(canvasRef.current.toJSON(['uid']));
+    const canvasJSON = canvasRef.current.toJSON(CANVAS_EXPORT_PROPERTIES);
+    const thumbnail = canvasRef.current.toDataURL({ multiplier: 0.1, quality: 0.5 });
+
+    // We use setPages with a callback to ensure we have the latest pages array
+    // and then we update the history based on that.
+    setPages(prevPages => {
+      const updatedPages = [...prevPages];
+      if (updatedPages[currentIndex]) {
+        updatedPages[currentIndex] = {
+          ...updatedPages[currentIndex],
+          canvasObjects: canvasJSON,
+          thumbnail
+        };
+      }
+
+      // Create a full project snapshot
+      const projectSnapshot = {
+        pages: updatedPages,
+        currentPageIndex: currentIndex
+      };
+
+      const json = JSON.stringify(projectSnapshot);
+
+      const currentIdx = historyIndexRef.current;
+      const newHistory = historyRef.current.slice(0, currentIdx + 1);
+      newHistory.push(json);
+
+      historyRef.current = newHistory;
+      historyIndexRef.current = newHistory.length - 1;
+
+      updateHistoryState();
+      return updatedPages;
+    });
+  }, []); // Remove dependency on currentPageIndex to avoid stale closures if it changes async
+
+  const addPage = useCallback(() => {
+    if (!canvasRef.current) return;
+
+    // Use REF for sync access
+    const currentIndex = currentPageIndexRef.current;
+
+    // Sync current page first
+    // @ts-ignore
+    const currentJSON = canvasRef.current.toJSON(CANVAS_EXPORT_PROPERTIES);
+    const thumbnail = canvasRef.current.toDataURL({ multiplier: 0.1, quality: 0.5 });
+
+    setPages(prevPages => {
+      const updatedPages = [...prevPages];
+      if (updatedPages[currentIndex]) {
+        updatedPages[currentIndex] = {
+          ...updatedPages[currentIndex],
+          canvasObjects: currentJSON,
+          thumbnail
+        };
+      }
+
+      const newPage: Page = {
+        id: generateId(),
+        canvasObjects: null,
+        thumbnail: ''
+      };
+
+      const newPages = [...updatedPages, newPage];
+      const newIndex = newPages.length - 1;
+
+      // Canvas cleanup
+      isInternalUpdate.current = true;
+      canvasRef.current!.clear();
+      setupPage(canvasRef.current!);
+      canvasRef.current!.renderAll();
+      isInternalUpdate.current = false;
+
+      setCurrentPageIndex(newIndex);
+      currentPageIndexRef.current = newIndex; // Update REF immediately
+
+      setSelectedObject(null);
+      setLayers([]);
+
+      // Save History for the transition
+      const snapshot = JSON.stringify({
+        pages: newPages,
+        currentPageIndex: newIndex
+      });
+
+      const currentIdx = historyIndexRef.current;
+      const h = historyRef.current.slice(0, currentIdx + 1);
+      h.push(snapshot);
+      historyRef.current = h;
+      historyIndexRef.current = h.length - 1;
+      updateHistoryState();
+
+      return newPages;
+    });
+  }, []);
+
+  const switchPage = useCallback(async (index: number) => {
+    // Current Index from REF
+    const currentIndex = currentPageIndexRef.current;
+
+    if (!canvasRef.current || index === currentIndex || index < 0 || index >= pages.length) return;
+
+    // Save current
+    // @ts-ignore
+    const currentJSON = canvasRef.current.toJSON(CANVAS_EXPORT_PROPERTIES);
+    const thumb = canvasRef.current.toDataURL({ multiplier: 0.1, quality: 0.5 });
+
+    // Use functional update to ensure we have latest pages
+    setPages(prevPages => {
+      const updatedPages = [...prevPages];
+      // Save to the INDEX we are leaving (currentIndex)
+      updatedPages[currentIndex] = {
+        ...updatedPages[currentIndex],
+        canvasObjects: currentJSON,
+        thumbnail: thumb
+      };
+
+      // Return updated pages - we will use this logic in the async part too via closure if needed, 
+      // but setState is better. 
+      // Wait, we need to load the Target Page now.
+      // Doing this inside setPages is tricky because loading is async.
+      // Let's rely on 'pages' dependency but use Ref for index.
+      return updatedPages;
+    });
+
+    // We update the local variable to proceed with loading
+    const updatedPages = [...pages];
+    updatedPages[currentIndex] = {
+      ...updatedPages[currentIndex],
+      canvasObjects: currentJSON,
+      thumbnail: thumb
+    };
+
+    // Load Target
+    const targetPage = updatedPages[index];
+    isInternalUpdate.current = true;
+
+    await canvasRef.current.clear();
+    if (targetPage.canvasObjects) {
+      await canvasRef.current.loadFromJSON(targetPage.canvasObjects);
+    }
+    setupPage(canvasRef.current);
+    canvasRef.current.renderAll();
+
+    // Finalize state update
+    // setPages(updatedPages); // Already triggered via setPages above? No, above was functional.
+    // Actually, to avoid conflicts, let's do one atomic update of pages at the end or begin.
+    // Let's stick to updating state once.
+
+    setPages(updatedPages);
+    setCurrentPageIndex(index);
+    currentPageIndexRef.current = index; // Update REF
+
+    setSelectedObject(null);
+    setLayers([...canvasRef.current.getObjects().filter(o => !(o as any).isPage)]);
+
+    isInternalUpdate.current = false;
+
+    // History Snapshot
+    const snapshot = JSON.stringify({
+      pages: updatedPages,
+      currentPageIndex: index
+    });
 
     const currentIdx = historyIndexRef.current;
-    const newHistory = historyRef.current.slice(0, currentIdx + 1);
-    newHistory.push(json);
-
-    historyRef.current = newHistory;
-    historyIndexRef.current = newHistory.length - 1;
-
+    const h = historyRef.current.slice(0, currentIdx + 1);
+    h.push(snapshot);
+    historyRef.current = h;
+    historyIndexRef.current = h.length - 1;
     updateHistoryState();
-    console.log("History saved. Size:", historyRef.current.length);
-  }, []);
+
+  }, [pages]); // Removed currentPageIndex dependency, use Ref
+
+  const deletePage = useCallback((index: number) => {
+    if (pages.length <= 1) return;
+    if (!confirm('Supprimer cette page ? Cette action est irréversible (sauf via Annuler).')) return;
+
+    setPages(prevPages => {
+      const updatedPages = prevPages.filter((_, i) => i !== index);
+      const currentIndex = currentPageIndexRef.current;
+      let newIndex = currentIndex;
+
+      if (index <= currentIndex && currentIndex > 0) {
+        newIndex = currentIndex - 1;
+      }
+      if (newIndex >= updatedPages.length) {
+        newIndex = updatedPages.length - 1;
+      }
+
+      // If we are deleting the current page, we must LOAD the new current page
+      if (index === currentIndex) {
+        const targetPage = updatedPages[newIndex];
+        isInternalUpdate.current = true;
+        canvasRef.current?.clear();
+        if (targetPage.canvasObjects) {
+          canvasRef.current?.loadFromJSON(targetPage.canvasObjects).then(() => {
+            setupPage(canvasRef.current!);
+            canvasRef.current?.renderAll();
+            setLayers([...canvasRef.current!.getObjects().filter(o => !(o as any).isPage)]);
+            isInternalUpdate.current = false;
+          });
+        } else {
+          setupPage(canvasRef.current!);
+          canvasRef.current?.renderAll();
+          setLayers([]);
+          isInternalUpdate.current = false;
+        }
+      }
+
+      setCurrentPageIndex(newIndex);
+      currentPageIndexRef.current = newIndex; // Update REF
+
+      // History
+      const snapshot = JSON.stringify({
+        pages: updatedPages,
+        currentPageIndex: newIndex
+      });
+
+      const currentIdx = historyIndexRef.current;
+      const h = historyRef.current.slice(0, currentIdx + 1);
+      h.push(snapshot);
+      historyRef.current = h;
+      historyIndexRef.current = h.length - 1;
+      updateHistoryState();
+
+      return updatedPages;
+    });
+  }, [pages, currentPageIndex]);
 
   const handleDelete = useCallback(() => {
     if (!canvasRef.current) return;
@@ -785,16 +1042,29 @@ function App() {
 
     isInternalUpdate.current = true;
     historyIndexRef.current -= 1;
-    const state = historyRef.current[historyIndexRef.current];
+    const stateStr = historyRef.current[historyIndexRef.current];
 
     try {
-      await canvasRef.current.loadFromJSON(JSON.parse(state));
+      const state = JSON.parse(stateStr);
+      const { pages: restoredPages, currentPageIndex: restoredIndex } = state;
+
+      setPages(restoredPages);
+      setCurrentPageIndex(restoredIndex);
+      currentPageIndexRef.current = restoredIndex;
+
+      // Load the canvas for the restored index
+      const targetPage = restoredPages[restoredIndex];
+      if (targetPage && targetPage.canvasObjects) {
+        await canvasRef.current.loadFromJSON(targetPage.canvasObjects);
+      } else {
+        canvasRef.current.clear();
+      }
+
+      setupPage(canvasRef.current);
       canvasRef.current.renderAll();
       canvasRef.current.discardActiveObject();
       setSelectedObject(null);
-      setLayers([...canvasRef.current.getObjects()]);
-
-      setupPage(canvasRef.current);
+      setLayers([...canvasRef.current.getObjects().filter(o => !(o as any).isPage)]);
     } catch (e) {
       console.error("Undo failed", e);
     }
@@ -808,16 +1078,28 @@ function App() {
 
     isInternalUpdate.current = true;
     historyIndexRef.current += 1;
-    const state = historyRef.current[historyIndexRef.current];
+    const stateStr = historyRef.current[historyIndexRef.current];
 
     try {
-      await canvasRef.current.loadFromJSON(JSON.parse(state));
+      const state = JSON.parse(stateStr);
+      const { pages: restoredPages, currentPageIndex: restoredIndex } = state;
+
+      setPages(restoredPages);
+      setCurrentPageIndex(restoredIndex);
+      currentPageIndexRef.current = restoredIndex;
+
+      const targetPage = restoredPages[restoredIndex];
+      if (targetPage && targetPage.canvasObjects) {
+        await canvasRef.current.loadFromJSON(targetPage.canvasObjects);
+      } else {
+        canvasRef.current.clear();
+      }
+
+      setupPage(canvasRef.current);
       canvasRef.current.renderAll();
       canvasRef.current.discardActiveObject();
       setSelectedObject(null);
-      setLayers([...canvasRef.current.getObjects()]);
-
-      setupPage(canvasRef.current);
+      setLayers([...canvasRef.current.getObjects().filter(o => !(o as any).isPage)]);
     } catch (e) {
       console.error("Redo failed", e);
     }
@@ -1116,6 +1398,10 @@ function App() {
       setSelectedObject(null);
       setLayers([]);
 
+      setPages([{ id: 'initial', canvasObjects: null, thumbnail: '' }]);
+      setCurrentPageIndex(0);
+      currentPageIndexRef.current = 0;
+
       historyRef.current = [];
       historyIndexRef.current = -1;
       isInternalUpdate.current = false;
@@ -1135,6 +1421,10 @@ function App() {
       setSelectedObject(null);
       setLayers([]);
 
+      setPages([{ id: 'initial', canvasObjects: null, thumbnail: '' }]);
+      setCurrentPageIndex(0);
+      currentPageIndexRef.current = 0;
+
       historyRef.current = [];
       historyIndexRef.current = -1;
       isInternalUpdate.current = false;
@@ -1147,10 +1437,22 @@ function App() {
   const handleSave = useCallback(async () => {
     if (!canvasRef.current) return;
 
-    // Create Project Object
+    // Sync CURRENT page before saving
+    // @ts-ignore
+    const currentJSON = canvasRef.current.toJSON(['uid']);
+    const thumb = canvasRef.current.toDataURL({ multiplier: 0.1, quality: 0.5 });
+
+    // Build final page list
+    const updatedPages = [...pages];
+    updatedPages[currentPageIndex] = {
+      ...updatedPages[currentPageIndex],
+      canvasObjects: currentJSON,
+      thumbnail: thumb
+    };
+
     const projectData = {
-      // @ts-ignore
-      canvas: canvasRef.current.toJSON(['uid']),
+      pages: updatedPages,
+      currentPageIndex: currentPageIndex,
       palette: {
         colors: paletteColors,
         gradients: paletteGradients
@@ -1160,21 +1462,15 @@ function App() {
     const json = JSON.stringify(projectData);
 
     if (window.electronAPI) {
-      // Pass currentFilePath if we have one (Overwrite), otherwise undefined (Save As)
       const result = await window.electronAPI.saveProject(json, currentFilePath || undefined);
       if (result.success) {
         if (result.filePath) {
           setCurrentFilePath(result.filePath);
         }
-        // Minimal feedback for overwrite?
-        const msg = currentFilePath ? 'Sauvegardé.' : 'Projet sauvegardé avec succès !';
-        console.log(msg); // Optional: Toast notification
+        console.log('Projet sauvegardé.');
       }
-    } else {
-      console.warn('Save not supported in browser mode');
-      console.log(json);
     }
-  }, [paletteColors, paletteGradients, currentFilePath]);
+  }, [paletteColors, paletteGradients, currentFilePath, pages, currentPageIndex]);
 
   const handleLoad = useCallback(async () => {
     if (!canvasRef.current) return;
@@ -1188,31 +1484,47 @@ function App() {
 
           const parsed = JSON.parse(json);
 
-          let canvasData = parsed;
-          // Check if new format
-          if (parsed.canvas && parsed.palette) {
-            canvasData = parsed.canvas;
-            setPaletteColors(parsed.palette.colors || []);
-            setPaletteGradients(parsed.palette.gradients || []);
+          let restoredPages: Page[] = [];
+          let restoredIndex = 0;
+
+          // DETECTION: New Multi-page vs Legacy Single-page
+          if (parsed.pages && Array.isArray(parsed.pages)) {
+            restoredPages = parsed.pages;
+            restoredIndex = parsed.currentPageIndex || 0;
+            setPaletteColors(parsed.palette?.colors || []);
+            setPaletteGradients(parsed.palette?.gradients || []);
+          } else {
+            // Legacy Migration
+            let canvasData = parsed;
+            if (parsed.canvas) {
+              canvasData = parsed.canvas;
+              setPaletteColors(parsed.palette?.colors || []);
+              setPaletteGradients(parsed.palette?.gradients || []);
+            }
+            restoredPages = [{
+              id: 'legacy-' + generateId(),
+              canvasObjects: canvasData,
+              thumbnail: ''
+            }];
+            restoredIndex = 0;
           }
 
-          await canvasRef.current.loadFromJSON(canvasData);
+          setPages(restoredPages);
+          setCurrentPageIndex(restoredIndex);
 
-          // Ensure every loaded object has an ID
-          canvasRef.current.getObjects().forEach((obj: any) => {
-            if (!obj.uid) {
-              obj.uid = generateId();
-            }
-          });
+          // Load the specific page
+          const targetPage = restoredPages[restoredIndex];
+          await canvasRef.current.clear();
+          if (targetPage.canvasObjects) {
+            await canvasRef.current.loadFromJSON(targetPage.canvasObjects);
+          }
 
-          // Restore Page Background if missing
           setupPage(canvasRef.current);
-
           canvasRef.current.renderAll();
-          setLayers([...canvasRef.current.getObjects()]);
-          console.log('Projet chargé');
+          setLayers([...canvasRef.current.getObjects().filter(o => !(o as any).isPage)]);
 
-          historyRef.current = [JSON.stringify(canvasData)];
+          // Init Histoy with full project
+          historyRef.current = [JSON.stringify({ pages: restoredPages, currentPageIndex: restoredIndex })];
           historyIndexRef.current = 0;
           isInternalUpdate.current = false;
           updateHistoryState();
@@ -1220,6 +1532,7 @@ function App() {
         } catch (error) {
           console.error("Erreur chargement:", error);
           alert("Erreur lors du chargement du fichier");
+          isInternalUpdate.current = false;
         }
       }
     }
@@ -1660,30 +1973,24 @@ function App() {
   }, []);
 
   const handleExportPDF = useCallback(async () => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current || pages.length === 0) return;
 
-    // Temporarily deselect everything
+    // Temporarily deselect
     const activeObj = canvasRef.current.getActiveObject();
     canvasRef.current.discardActiveObject();
     canvasRef.current.renderAll();
 
-    // Find Page Dimensions
+    // Sync CURRENT page state first
     // @ts-ignore
-    const pageObj = canvasRef.current.getObjects().find(o => o.isPage) as fabric.Rect;
-    const exportWidth = pageObj ? pageObj.width! : PAGE_WIDTH;
-    const exportHeight = pageObj ? pageObj.height! : PAGE_HEIGHT;
-
-    // Temporarily include Page in export
-    if (pageObj) pageObj.excludeFromExport = false;
-
-    // Temporarily hide workspace background
-    const originalBg = canvasRef.current.backgroundColor;
-    canvasRef.current.backgroundColor = '';
-
-    const orientation = exportWidth > exportHeight ? 'landscape' : 'portrait';
+    const currentJSON = canvasRef.current.toJSON(['uid']);
+    const currentPages = [...pages];
+    currentPages[currentPageIndex] = {
+      ...currentPages[currentPageIndex],
+      canvasObjects: currentJSON
+    };
 
     const pdf = new jsPDF({
-      orientation: orientation,
+      orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
     });
@@ -1691,49 +1998,56 @@ function App() {
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    // 1. Generate SVG from Fabric (Cropped to Page)
-    const svgString = canvasRef.current.toSVG({
-      suppressPreamble: true,
-      width: String(exportWidth),
-      height: String(exportHeight),
-      viewBox: {
-        x: 0,
-        y: 0,
-        width: exportWidth,
-        height: exportHeight
-      }
-    });
+    isInternalUpdate.current = true;
+    const originalBg = canvasRef.current.backgroundColor;
 
-    // Restore state
-    if (pageObj) pageObj.excludeFromExport = true;
+    for (let i = 0; i < currentPages.length; i++) {
+      if (i > 0) pdf.addPage();
+
+      const pageState = currentPages[i];
+      await canvasRef.current.clear();
+      if (pageState.canvasObjects) {
+        await canvasRef.current.loadFromJSON(pageState.canvasObjects);
+      }
+
+      // Prepare for PDF export
+      // @ts-ignore
+      const pageObj = canvasRef.current.getObjects().find(o => o.isPage) as fabric.Rect;
+      if (pageObj) pageObj.excludeFromExport = false;
+      canvasRef.current.backgroundColor = '';
+
+      const svgString = canvasRef.current.toSVG({
+        suppressPreamble: true,
+        width: String(PAGE_WIDTH),
+        height: String(PAGE_HEIGHT),
+        viewBox: { x: 0, y: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT }
+      });
+
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svgString, "image/svg+xml");
+      await pdf.svg(doc.documentElement, { x: 0, y: 0, width: pdfWidth, height: pdfHeight });
+    }
+
+    // Restore original current page
+    const targetPage = currentPages[currentPageIndex];
+    await canvasRef.current.clear();
+    if (targetPage.canvasObjects) {
+      await canvasRef.current.loadFromJSON(targetPage.canvasObjects);
+    }
+    setupPage(canvasRef.current);
     canvasRef.current.backgroundColor = originalBg;
 
-    // 2. Parse SVG String to DOM Element
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(svgString, "image/svg+xml");
-    const svgElement = doc.documentElement;
-
-    // 3. Convert SVG to PDF
-    await pdf.svg(svgElement, {
-      x: 0,
-      y: 0,
-      width: pdfWidth,
-      height: pdfHeight,
-      loadExternalStyleSheets: false
-    });
-
-    // Restore selection
     if (activeObj) {
       canvasRef.current.setActiveObject(activeObj);
-      canvasRef.current.renderAll();
     }
+    canvasRef.current.renderAll();
+    isInternalUpdate.current = false;
 
     const pdfOutput = pdf.output('arraybuffer');
-
     if (window.electronAPI) {
-      await window.electronAPI.saveFile(pdfOutput, 'design_vector.pdf');
+      await window.electronAPI.saveFile(pdfOutput, 'design_multipage.pdf');
     }
-  }, []);
+  }, [pages, currentPageIndex]);
 
   // --- Alignment Logic ---
   // --- Alignment Logic (Align to Page) ---
@@ -2073,7 +2387,7 @@ function App() {
       setSelectedObject(null);
     }
     canvasRef.current.requestRenderAll();
-    setLayers([...canvasRef.current.getObjects()]);
+    setLayers([...canvasRef.current.getObjects().filter(o => !(o as any).isPage)]);
   };
 
   const handleToggleLock = (obj: fabric.Object) => {
@@ -2087,19 +2401,24 @@ function App() {
       lockScalingY: isLocked
     });
     canvasRef.current.requestRenderAll();
-    setLayers([...canvasRef.current.getObjects()]);
+    setLayers([...canvasRef.current.getObjects().filter(o => !(o as any).isPage)]);
   };
 
   const handleLayerReorder = (sourceIndex: number, destinationIndex: number) => {
     if (!canvasRef.current) return;
-    const objects = canvasRef.current.getObjects();
-    const obj = objects[sourceIndex];
+    const allObjects = canvasRef.current.getObjects();
+    const filteredObjects = allObjects.filter(o => !(o as any).isPage);
+    const obj = filteredObjects[sourceIndex];
+    if (!obj) return;
 
-    // Move in Fabric (it handles z-index shifting)
-    canvasRef.current.moveObjectTo(obj, destinationIndex);
+    // Calculate offset based on hidden page object at bottom
+    const pageCount = allObjects.filter(o => (o as any).isPage).length;
+    const realDestIndex = destinationIndex + pageCount;
+
+    canvasRef.current.moveObjectTo(obj, realDestIndex);
 
     canvasRef.current.renderAll();
-    setLayers([...canvasRef.current.getObjects()]);
+    setLayers([...canvasRef.current.getObjects().filter(o => !(o as any).isPage)]);
     saveHistory();
   };
 
@@ -2120,9 +2439,6 @@ function App() {
           canvas.setActiveObject(opt.target);
           canvas.requestRenderAll();
         }
-
-        // Get exact pointer coordinates for menu position
-        const pointer = canvas.getPointer(opt.e);
 
         // Because we set active object on mousedown in the handle itself (polyControlUtils),
         // or via standard selection, getActiveObject() should be correct now.
@@ -2513,7 +2829,37 @@ function App() {
               </CanvasArea>
             </div>
 
-
+            {/* Bottom Page Strip */}
+            <div className="bottom-page-strip">
+              {pages.map((page, index) => (
+                <div
+                  key={page.id}
+                  className={`page-thumbnail ${index === currentPageIndex ? 'active' : ''}`}
+                  onClick={() => switchPage(index)}
+                >
+                  <div className="thumbnail-preview">
+                    {page.thumbnail ? <img src={page.thumbnail} alt={`Page ${index + 1}`} /> : <div className="empty-thumb" />}
+                  </div>
+                  <div className="page-label">PAGE {index + 1}</div>
+                  {pages.length > 1 && (
+                    <button
+                      className="delete-page-btn"
+                      title="Supprimer la page"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deletePage(index);
+                      }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button className="add-page-btn" onClick={addPage} title="Ajouter une page">
+                <FilePlus size={24} />
+                <span>AJOUTER</span>
+              </button>
+            </div>
 
             {/* QR Code Modal (Simple Overlay) */}
             {showQRModal && (

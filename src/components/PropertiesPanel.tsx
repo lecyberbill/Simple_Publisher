@@ -35,6 +35,8 @@ interface PropertiesPanelProps {
         setBrushShadowWidth: (w: number) => void;
         brushTexture: string | null;
         setBrushTexture: (t: string | null) => void;
+        brushPatternScale?: number;
+        setBrushPatternScale?: (scale: number) => void;
     };
 }
 
