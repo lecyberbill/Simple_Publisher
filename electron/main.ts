@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import * as fs from 'fs/promises';
 import path from 'path';
 import fontList from 'font-list';
+import * as zlib from 'zlib'; // Import zlib
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -44,8 +45,6 @@ app.whenReady().then(() => {
             return [];
         }
     });
-
-    // IPC for Saving Project
     ipcMain.handle('save-project', async (event, data: string, targetPath?: string) => {
         let filePath = targetPath;
         let canceled = false;
@@ -63,7 +62,9 @@ app.whenReady().then(() => {
         }
 
         try {
-            await fs.writeFile(filePath, data, 'utf-8');
+            // COMPRESSION: Gzip the JSON string
+            const buffer = zlib.gzipSync(Buffer.from(data, 'utf-8'));
+            await fs.writeFile(filePath, buffer);
             return { success: true, filePath };
         } catch (e) {
             console.error('Failed to save file', e);
@@ -83,7 +84,18 @@ app.whenReady().then(() => {
         }
 
         try {
-            const data = await fs.readFile(filePaths[0], 'utf-8');
+            // COMPRESSION: Read as Buffer, try Decompress
+            const buffer = await fs.readFile(filePaths[0]); // Returns Buffer
+            let data = '';
+
+            try {
+                // Try to decompress assuming it's GZIP
+                data = zlib.gunzipSync(buffer).toString('utf-8');
+            } catch (err) {
+                // If decompression fails, assume it's a legacy plain JSON text file
+                data = buffer.toString('utf-8');
+            }
+
             return { data, filePath: filePaths[0] };
         } catch (e) {
             console.error('Failed to read file', e);

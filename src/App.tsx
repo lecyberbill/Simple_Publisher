@@ -5,7 +5,7 @@ import {
   AlignStartVertical, AlignCenterVertical, AlignEndVertical,
   AlignStartHorizontal, AlignCenterHorizontal, AlignEndHorizontal,
   ZoomIn, ZoomOut, Maximize,
-  Star, QrCode, X
+  Star, QrCode, X, ChevronUp, ChevronDown, Printer, Spline
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import './App.css'
@@ -91,18 +91,35 @@ interface Page {
   height: number;
 }
 
+import { StylePanel } from './components/StylePanel';
+import type { SavedStyle } from './components/StylePanel';
+
+// ... (existing imports)
+
 function App() {
   const [fonts, setFonts] = useState<string[]>([]);
   const [selectedObject, setSelectedObject] = useState<fabric.Object | null>(null);
   const [layers, setLayers] = useState<fabric.Object[]>([]);
-  const [activeTab, setActiveTab] = useState<'properties' | 'layers' | 'colors'>('properties');
+
+  // Updated Tab Definition
+  const [activeTab, setActiveTab] = useState<'properties' | 'layers' | 'colors' | 'styles'>('properties');
+
   const [paletteColors, setPaletteColors] = useState<string[]>(['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff', '#ffffff', '#000000']);
   const [paletteGradients, setPaletteGradients] = useState<any[]>([]);
+
+  // Document Styles State
+  const [docStyles, setDocStyles] = useState<SavedStyle[]>([]);
+
+
+  // Text Edit Modal State (Electron workaround for prompt)
+  const [editTextModal, setEditTextModal] = useState<{ open: boolean, text: string, object: fabric.Text | null }>({ open: false, text: '', object: null });
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved');
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Collapsible Pages Panel
+  const [isPagesPanelCollapsed, setIsPagesPanelCollapsed] = useState(false);
 
   /* Auto-Save Effect Moved Later */
 
@@ -506,7 +523,7 @@ function App() {
 
 
 
-  const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'pencil' | 'pen' | 'brush'>('select');
+  const [activeTool, setActiveTool] = useState<'select' | 'hand' | 'pencil' | 'pen' | 'brush' | 'text-path'>('select');
   const isPanning = useRef(false);
 
   const lastMousePosition = useRef({ x: 0, y: 0 });
@@ -650,6 +667,17 @@ function App() {
       canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
       canvas.freeDrawingBrush.width = 2;
       canvas.freeDrawingBrush.color = 'black';
+      canvas.defaultCursor = 'crosshair';
+      canvas.discardActiveObject();
+
+    } else if (activeTool === 'text-path') {
+      canvas.isDrawingMode = true;
+      // @ts-ignore
+      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+      // @ts-ignore
+      canvas.freeDrawingBrush.decimate = 8;
+      canvas.freeDrawingBrush.width = 2;
+      canvas.freeDrawingBrush.color = '#2196F3'; // Blue to indicate special tool
       canvas.defaultCursor = 'crosshair';
       canvas.discardActiveObject();
 
@@ -945,9 +973,69 @@ function App() {
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
 
+    const handleBeforePathCreated = (e: any) => {
+      if (activeTool === 'text-path') {
+        const path = e.path;
+
+        // HELPER: Explicitly calculate segments info (Crucial for Fabric Text on Path)
+        // @ts-ignore
+        if (fabric.util.getPathSegmentsInfo) {
+          // @ts-ignore
+          const pathInfo = fabric.util.getPathSegmentsInfo(path.path);
+          // @ts-ignore
+          path.segmentsInfo = pathInfo;
+        }
+
+        // RECONSTRUCTION: Create a fresh path from the drawing data
+        // This ensures we have a stable object compatible with Text
+        const cleanPath = new fabric.Path(path.path, {
+          stroke: null,
+          fill: null,
+          visible: false,
+          left: path.left,
+          top: path.top,
+          // @ts-ignore
+          segmentsInfo: path.segmentsInfo,
+          // @ts-ignore
+          absolutePositioned: true
+        });
+
+        const fontSize = 24;
+
+        // EXPERIMENTAL: Try FabricText from demo, fallback to Text
+        // @ts-ignore
+        const TextClass = fabric.FabricText || fabric.Text;
+
+        const text = new TextClass('Texte', {
+          top: path.top,
+          left: path.left,
+          fontFamily: 'Arial',
+          fontSize: fontSize,
+          fill: '#000000',
+          path: cleanPath, // Use the clean clone
+          objectCaching: false
+        });
+
+        // @ts-ignore
+        text.uid = generateId();
+        canvas.add(text);
+        canvas.setActiveObject(text);
+        setSelectedObject(text);
+      }
+    };
+
     const handlePathCreated = (e: any) => {
       const path = e.path;
       if (path) {
+        // TEXT ON PATH MODE - Just clean up specific path
+        if (activeTool === 'text-path') {
+          canvas.remove(path);
+          setActiveTool('select');
+          saveHistory();
+          return;
+        }
+
+        // AUTOFILL / NORMAL DRAWING LOGIC...
         // Assign UID if needed or just save history
         // @ts-ignore
         path.uid = generateId();
@@ -966,14 +1054,16 @@ function App() {
         saveHistory();
         // Auto-select the drawn path?
         canvas.setActiveObject(path);
-        // Reset to select tool? Or keep drawing?
-        // Usually keep drawing. 
       }
     };
 
+    canvas.on('before:path:created', handleBeforePathCreated);
     canvas.on('path:created', handlePathCreated);
-    return () => { canvas.off('path:created', handlePathCreated); };
-  }, [saveHistory]);
+    return () => {
+      canvas.off('before:path:created', handleBeforePathCreated);
+      canvas.off('path:created', handlePathCreated);
+    };
+  }, [saveHistory, activeTool, brushType, brushPatternScale, brushTexture, brushWidth]);
 
   // DOUBLE CLICK TO EDIT PATH
   useEffect(() => {
@@ -1047,14 +1137,25 @@ function App() {
       if (activeTool === 'pen') return;
 
       const target = opt.target;
-      if (target && target.type === 'path') {
-        // Enter Edit Mode
-        setEditingPath(target);
-        // Deselect to avoid Transform box masking handles
-        canvas.discardActiveObject();
-        canvas.requestRenderAll();
+      if (target) {
+        if (target.type === 'path') {
+          // Enter Edit Mode
+          setEditingPath(target);
+          // Deselect to avoid Transform box masking handles
+          canvas.discardActiveObject();
+          canvas.requestRenderAll();
+        } else if (target.type === 'text' && (target as any).path) {
+          // Edit Text on Path via Modal (no prompt supported in Electron)
+          setEditTextModal({
+            open: true,
+            text: (target as any).text,
+            object: target as fabric.Text
+          });
+        } else {
+          // Exit Edit Mode
+          setEditingPath(null);
+        }
       } else {
-        // Exit Edit Mode
         setEditingPath(null);
       }
     };
@@ -1065,6 +1166,55 @@ function App() {
     };
   }, [activeTool]);
 
+
+  // Keyboard Object Movement
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isArrowKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key);
+      if (!isArrowKey) return;
+
+      if (!canvasRef.current) return;
+
+      const canvas = canvasRef.current;
+      const activeObj = canvas.getActiveObject();
+
+      if (!activeObj) return;
+
+      // Don't move if editing text
+      // @ts-ignore
+      if (activeObj.isEditing) return;
+
+      e.preventDefault(); // Prevent scrolling
+
+      const step = e.shiftKey ? 10 : 1;
+      const currentTop = activeObj.top || 0;
+      const currentLeft = activeObj.left || 0;
+
+      switch (e.key) {
+        case 'ArrowUp':
+          activeObj.set('top', currentTop - step);
+          break;
+        case 'ArrowDown':
+          activeObj.set('top', currentTop + step);
+          break;
+        case 'ArrowLeft':
+          activeObj.set('left', currentLeft - step);
+          break;
+        case 'ArrowRight':
+          activeObj.set('left', currentLeft + step);
+          break;
+      }
+
+      activeObj.setCoords();
+      canvas.requestRenderAll();
+      canvas.fire('object:modified', { target: activeObj });
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const undo = useCallback(async () => {
     if (historyIndexRef.current <= 0 || !canvasRef.current) return;
@@ -1375,10 +1525,13 @@ function App() {
     canvasRef.current.add(shape);
     canvasRef.current.setActiveObject(shape);
     setSelectedObject(shape);
-    setLayers([...canvasRef.current.getObjects()]);
-    saveHistory();
     setShowShapeMenu(false); // Close menu after pick
   }, [saveHistory]);
+
+  const activateTextPathTool = useCallback(() => {
+    setActiveTool('text-path');
+    setShowShapeMenu(false);
+  }, []);
 
   const addText = useCallback(() => {
     if (!canvasRef.current) return;
@@ -1451,6 +1604,7 @@ function App() {
       setPages([{ id: 'initial', canvasObjects: null, thumbnail: '', width: DEFAULT_PAGE_WIDTH, height: DEFAULT_PAGE_HEIGHT }]);
       setCurrentPageIndex(0);
       currentPageIndexRef.current = 0;
+      setDocStyles([]); // Reset Styles
 
       historyRef.current = [];
       historyIndexRef.current = -1;
@@ -1480,6 +1634,7 @@ function App() {
     const projectData = {
       pages: updatedPages,
       currentPageIndex: currentPageIndex,
+      styles: docStyles, // Persist Styles
       palette: {
         colors: paletteColors,
         gradients: paletteGradients
@@ -1554,9 +1709,10 @@ function App() {
           // DETECTION: New Multi-page vs Legacy Single-page
           if (parsed.pages && Array.isArray(parsed.pages)) {
             restoredPages = parsed.pages;
-            restoredIndex = parsed.currentPageIndex || 0;
+            restoredIndex = 0; // Force open on Page 1 (fixes confusion if saved on Page 2)
             setPaletteColors(parsed.palette?.colors || []);
             setPaletteGradients(parsed.palette?.gradients || []);
+            setDocStyles(parsed.styles || []);
           } else {
             // Legacy Migration
             let canvasData = parsed;
@@ -1832,6 +1988,7 @@ function App() {
     setPages([{ id: 'initial', canvasObjects: null, thumbnail: '', width: template.width, height: template.height }]);
     setCurrentPageIndex(0);
     currentPageIndexRef.current = 0;
+    setDocStyles([]); // Reset Styles
 
     historyRef.current = [];
     historyIndexRef.current = -1;
@@ -2147,6 +2304,133 @@ function App() {
     if (window.electronAPI) {
       await window.electronAPI.saveFile(pdfOutput, 'design_multipage.pdf');
     }
+  }, [pages, currentPageIndex]);
+
+  const printIframeRef = useRef<HTMLIFrameElement>(null);
+
+  const handleDirectPrint = useCallback(async () => {
+    if (!canvasRef.current || pages.length === 0) return;
+
+    // Temporarily deselect
+    const activeObj = canvasRef.current.getActiveObject();
+    canvasRef.current.discardActiveObject();
+    canvasRef.current.renderAll();
+
+    // Sync CURRENT page state first
+    // @ts-ignore
+    const currentJSON = canvasRef.current.toJSON(['uid']);
+    const currentPages = [...pages];
+    currentPages[currentPageIndex] = {
+      ...currentPages[currentPageIndex],
+      canvasObjects: currentJSON
+    };
+
+    const svgPages: string[] = [];
+    isInternalUpdate.current = true;
+    const originalBg = canvasRef.current.backgroundColor;
+
+    // Generate SVG for all pages
+    for (let i = 0; i < currentPages.length; i++) {
+      const pageState = currentPages[i];
+      await canvasRef.current.clear();
+      if (pageState.canvasObjects) {
+        await canvasRef.current.loadFromJSON(pageState.canvasObjects);
+      }
+
+      // Prepare for Export (Visible Page Border for Print?)
+      // Usually we want wysiwyg, so yes.
+      // @ts-ignore
+      const pageObj = canvasRef.current.getObjects().find(o => o.isPage) as fabric.Rect;
+      if (pageObj) pageObj.excludeFromExport = false;
+      canvasRef.current.backgroundColor = '';
+
+      const svgString = canvasRef.current.toSVG({
+        suppressPreamble: true,
+        width: String(pageState.width || DEFAULT_PAGE_WIDTH),
+        height: String(pageState.height || DEFAULT_PAGE_HEIGHT),
+        viewBox: { x: 0, y: 0, width: pageState.width || DEFAULT_PAGE_WIDTH, height: pageState.height || DEFAULT_PAGE_HEIGHT }
+      });
+      svgPages.push(svgString);
+    }
+
+    // Restore original current page
+    const targetPage = currentPages[currentPageIndex];
+    await canvasRef.current.clear();
+    if (targetPage.canvasObjects) {
+      await canvasRef.current.loadFromJSON(targetPage.canvasObjects);
+    }
+    setupPage(canvasRef.current, targetPage.width, targetPage.height);
+    canvasRef.current.backgroundColor = originalBg;
+
+    if (activeObj) {
+      canvasRef.current.setActiveObject(activeObj);
+    }
+    canvasRef.current.renderAll();
+    isInternalUpdate.current = false;
+
+    // --- PRINTING VIA IFRAME ---
+    if (printIframeRef.current) {
+      const iframe = printIframeRef.current;
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (doc) {
+        doc.open();
+        doc.write(`
+                <html>
+                <head>
+                    <title>Print</title>
+                    <style>
+                        @media print {
+                            @page {
+                                margin: 0;
+                                size: auto; 
+                            }
+                            body { 
+                                margin: 0; 
+                                -webkit-print-color-adjust: exact; 
+                            }
+                            .print-page { 
+                                break-after: always; 
+                                page-break-after: always;
+                                width: 100%;
+                                height: 100vh; /* Fill page */
+                                overflow: hidden;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                            }
+                            svg {
+                                width: 100%;
+                                height: 100%;
+                                display: block;
+                            }
+                        }
+                        /* Preview Styles (if visible, but iframe is hidden) */
+                        body { margin: 0; background: #fff; }
+                        .print-page { 
+                            margin: 0; 
+                            width: 100%; 
+                            height: 100vh;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        } 
+                    </style>
+                </head>
+                <body>
+                    ${svgPages.map(svg => `<div class="print-page">${svg}</div>`).join('')}
+                </body>
+                </html>
+            `);
+        doc.close();
+
+        // Wait for resources/rendering
+        setTimeout(() => {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        }, 500);
+      }
+    }
+
   }, [pages, currentPageIndex]);
 
 
@@ -2653,11 +2937,6 @@ function App() {
         } else {
           console.log("No actions available for this context");
         }
-      } else {
-        // Hide on left click
-        if (contextMenu.visible) {
-          setContextMenu(prev => ({ ...prev, visible: false }));
-        }
       }
     };
 
@@ -2666,6 +2945,102 @@ function App() {
       canvas.off('mouse:down', onMouseDown);
     };
   }, [contextMenu.visible, handleCopy, handleDelete, handleGroup, handleUngroup, handlePaste, canPaste, saveHistory]);
+
+  // STYLE MANAGER HANDLERS
+  const handleAddStyle = (name: string) => {
+    if (!canvasRef.current || !selectedObject) return;
+    const obj = selectedObject;
+
+    // Determine type
+    const isText = (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'textbox');
+    const type = isText ? 'text' : 'shape';
+
+    // Properties to save
+    const textProps = ['fill', 'stroke', 'strokeWidth', 'opacity', 'shadow', 'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'underline', 'linethrough', 'overline', 'backgroundColor', 'textBackgroundColor'];
+    const shapeProps = ['fill', 'stroke', 'strokeWidth', 'opacity', 'shadow', 'rx', 'ry'];
+
+    const propsToSave = isText ? textProps : shapeProps;
+
+    // Extract basic object properties
+    const activeProps = obj.toObject(propsToSave);
+    const styleData: any = {};
+
+    // 1. SMART CAPTURE (Text): Check first character for visual overrides
+    if (isText && (obj as any).styles && (obj as any).styles[0] && (obj as any).styles[0][0]) {
+      const firstCharStyle = (obj as any).styles[0][0];
+      // Prefer character visually dominant props
+      ['fill', 'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'underline', 'linethrough', 'overline'].forEach(p => {
+        if (firstCharStyle[p] !== undefined) {
+          styleData[p] = firstCharStyle[p];
+        }
+      });
+    }
+
+    // 2. Fill rest with Global Object properties
+    propsToSave.forEach(p => {
+      if (styleData[p] === undefined && activeProps[p] !== undefined) {
+        styleData[p] = activeProps[p];
+      }
+    });
+
+    // Create Style
+    const newStyle: SavedStyle = {
+      id: generateId(),
+      name,
+      type: type as any,
+      properties: styleData,
+      // @ts-ignore
+      previewColor: (typeof obj.fill === 'string' ? obj.fill : '#ccc')
+    };
+
+    setDocStyles([...docStyles, newStyle]);
+  };
+
+  const handleApplyStyle = (style: SavedStyle) => {
+    console.log("Applying Style:", style);
+    if (!selectedObject || !canvasRef.current) {
+      console.warn("Cannot apply style: No object selected or canvas ref missing");
+      return;
+    }
+
+    try {
+      // Apply props
+
+      // CRITICAL: Clear character-level styles so object-level styles take effect!
+      if (selectedObject.type === 'i-text' || selectedObject.type === 'text' || selectedObject.type === 'textbox') {
+        // @ts-ignore
+        if (style.properties.fill) {
+          // If we are applying a color, make sure to wipe any per-character color
+          // @ts-ignore
+          selectedObject.removeStyle('fill');
+          // @ts-ignore
+          selectedObject.removeStyle('stroke');
+        }
+        // Wipe styles entirely if needed, but let's try removeStyle per property first or just wipe styles
+        // @ts-ignore
+        selectedObject.set('styles', {});
+      }
+
+      selectedObject.set(style.properties);
+
+      // Force refresh for special props like shadow or font
+      if (style.properties.fontFamily && document.fonts) {
+        // Simple trigger
+        document.fonts.load(`10pt "${style.properties.fontFamily}"`);
+      }
+
+      selectedObject.setCoords();
+      canvasRef.current.requestRenderAll();
+      saveHistory();
+      console.log("Style applied successfully");
+    } catch (e) {
+      console.error("Failed to apply style:", e);
+    }
+  };
+
+  const handleRemoveStyle = (id: string) => {
+    setDocStyles(prev => prev.filter(s => s.id !== id));
+  };
 
   return (
     <div className="app-container" style={{
@@ -2821,7 +3196,18 @@ function App() {
               }}>
               <Download size={14} /> PDF
             </button>
+            <button
+              onClick={handleDirectPrint}
+              title="Imprimer"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                fontSize: '12px', background: '#333', padding: '4px 8px'
+              }}>
+              <Printer size={14} /> IMPRIMER
+            </button>
           </div>
+          {/* Hidden Print Iframe */}
+          <iframe ref={printIframeRef} title="print_frame" style={{ display: 'none', position: 'absolute', width: '0px', height: '0px', border: 'none' }} />
         </div>
       </header>
 
@@ -2849,6 +3235,25 @@ function App() {
               color: activeTool === 'select' ? '#fff' : 'inherit'
             }}>
             <MousePointer2 size={20} />
+          </button>
+
+          <button onClick={addText} title="Texte" style={{ padding: '8px' }}>
+            <Type size={20} />
+          </button>
+
+          <button
+            onClick={activateTextPathTool}
+            title="Texte sur Chemin (Dessinez votre courbe)"
+            style={{
+              padding: '8px',
+              borderRadius: '4px',
+              background: activeTool === 'text-path' ? 'var(--accent-color)' : 'transparent',
+              color: activeTool === 'text-path' ? '#fff' : 'inherit',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <Spline size={20} />
           </button>
 
           <button
@@ -2916,10 +3321,6 @@ function App() {
 
 
           <div style={{ width: '20px', height: '1px', background: 'var(--border-color)' }}></div>
-
-          <button onClick={addText} title="Texte" style={{ padding: '8px' }}>
-            <Type size={20} />
-          </button>
 
           {/* Shape Selector Dropdown */}
           <div style={{ position: 'relative' }}>
@@ -3034,35 +3435,56 @@ function App() {
             </div>
 
             {/* Bottom Page Strip */}
-            <div className="bottom-page-strip">
-              {pages.map((page, index) => (
-                <div
-                  key={page.id}
-                  className={`page-thumbnail ${index === currentPageIndex ? 'active' : ''}`}
-                  onClick={() => switchPage(index)}
-                >
-                  <div className="thumbnail-preview">
-                    {page.thumbnail ? <img src={page.thumbnail} alt={`Page ${index + 1}`} /> : <div className="empty-thumb" />}
-                  </div>
-                  <div className="page-label">PAGE {index + 1}</div>
-                  {pages.length > 1 && (
-                    <button
-                      className="delete-page-btn"
-                      title="Supprimer la page"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deletePage(index);
-                      }}
-                    >
-                      <Trash2 size={12} />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button className="add-page-btn" onClick={addPage} title="Ajouter une page">
-                <FilePlus size={24} />
-                <span>AJOUTER</span>
+            <div className={`bottom-page-strip ${isPagesPanelCollapsed ? 'collapsed' : ''}`}>
+              <button
+                className="collapse-pages-btn"
+                onClick={() => setIsPagesPanelCollapsed(!isPagesPanelCollapsed)}
+                title={isPagesPanelCollapsed ? "Afficher les pages" : "Masquer les pages"}
+              >
+                {isPagesPanelCollapsed ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
+
+              {!isPagesPanelCollapsed ? (
+                <>
+                  {pages.map((page, index) => (
+                    <div
+                      key={page.id}
+                      className={`page-thumbnail ${index === currentPageIndex ? 'active' : ''}`}
+                      onClick={() => switchPage(index)}
+                    >
+                      <div className="thumbnail-preview">
+                        {page.thumbnail ? <img src={page.thumbnail} alt={`Page ${index + 1}`} /> : <div className="empty-thumb" />}
+                      </div>
+                      <div className="page-label">PAGE {index + 1}</div>
+                      {pages.length > 1 && (
+                        <button
+                          className="delete-page-btn"
+                          title="Supprimer la page"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deletePage(index);
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button className="add-page-btn" onClick={addPage} title="Ajouter une page">
+                    <FilePlus size={24} />
+                    <span>AJOUTER</span>
+                  </button>
+                </>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, height: '100%', paddingLeft: 4 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    {pages.length} Page{pages.length > 1 ? 's' : ''}
+                  </span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    (Page {currentPageIndex + 1})
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -3182,6 +3604,20 @@ function App() {
             >
               COLORS
             </button>
+            <button
+              onClick={() => setActiveTab('styles')}
+              style={{
+                flex: 1,
+                padding: '10px',
+                fontSize: '12px',
+                fontWeight: 600,
+                color: activeTab === 'styles' ? 'var(--accent-color)' : 'var(--text-muted)',
+                borderBottom: activeTab === 'styles' ? '2px solid var(--accent-color)' : 'none',
+                background: 'transparent'
+              }}
+            >
+              STYLES
+            </button>
           </div>
 
           <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -3225,6 +3661,14 @@ function App() {
                   onApplyColor={handleApplyColor}
                   onApplyGradient={handleApplyGradient}
                 />
+              ) : activeTab === 'styles' ? (
+                <StylePanel
+                  styles={docStyles}
+                  onAddStyle={handleAddStyle}
+                  onApplyStyle={handleApplyStyle}
+                  onRemoveStyle={handleRemoveStyle}
+                  selectedObject={selectedObject}
+                />
               ) : (
                 <LayersPanel
                   objects={layers}
@@ -3247,6 +3691,70 @@ function App() {
           onClose={() => setContextMenu(prev => ({ ...prev, visible: false }))}
         />
       )}
+      {/* Text Edit Modal */}
+      {editTextModal.open && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: 'var(--bg-panel)',
+            padding: '20px',
+            borderRadius: '8px',
+            border: '1px solid var(--border-color)',
+            minWidth: '300px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+          }}>
+            <h3 style={{ marginTop: 0, color: 'var(--text-primary)' }}>Modifier le texte</h3>
+            <textarea
+              value={editTextModal.text}
+              onChange={(e) => setEditTextModal(prev => ({ ...prev, text: e.target.value }))}
+              style={{
+                width: '100%',
+                minHeight: '80px',
+                margin: '15px 0',
+                padding: '8px',
+                borderRadius: '4px',
+                border: '1px solid var(--border-color)',
+                background: 'var(--input-bg)',
+                color: 'var(--text-primary)',
+                fontFamily: 'inherit'
+              }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                onClick={() => setEditTextModal({ open: false, text: '', object: null })}
+                style={{ padding: '8px 16px', background: 'transparent', border: '1px solid var(--border-color)', borderRadius: '4px', color: 'var(--text-primary)', cursor: 'pointer' }}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => {
+                  if (editTextModal.object) {
+                    editTextModal.object.set('text', editTextModal.text);
+                    canvasRef.current?.requestRenderAll();
+                    saveHistory();
+                  }
+                  setEditTextModal({ open: false, text: '', object: null });
+                }}
+                style={{ padding: '8px 16px', background: 'var(--accent-color)', border: 'none', borderRadius: '4px', color: '#fff', cursor: 'pointer' }}
+              >
+                Valider
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div >
   );
 }

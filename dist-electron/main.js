@@ -49,6 +49,7 @@ const electron_1 = require("electron");
 const fs = __importStar(require("fs/promises"));
 const path_1 = __importDefault(require("path"));
 const font_list_1 = __importDefault(require("font-list"));
+const zlib = __importStar(require("zlib")); // Import zlib
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
     electron_1.app.quit();
@@ -88,7 +89,6 @@ electron_1.app.whenReady().then(() => {
             return [];
         }
     }));
-    // IPC for Saving Project
     electron_1.ipcMain.handle('save-project', (event, data, targetPath) => __awaiter(void 0, void 0, void 0, function* () {
         let filePath = targetPath;
         let canceled = false;
@@ -103,7 +103,9 @@ electron_1.app.whenReady().then(() => {
             return { success: false };
         }
         try {
-            yield fs.writeFile(filePath, data, 'utf-8');
+            // COMPRESSION: Gzip the JSON string
+            const buffer = zlib.gzipSync(Buffer.from(data, 'utf-8'));
+            yield fs.writeFile(filePath, buffer);
             return { success: true, filePath };
         }
         catch (e) {
@@ -121,7 +123,17 @@ electron_1.app.whenReady().then(() => {
             return null;
         }
         try {
-            const data = yield fs.readFile(filePaths[0], 'utf-8');
+            // COMPRESSION: Read as Buffer, try Decompress
+            const buffer = yield fs.readFile(filePaths[0]); // Returns Buffer
+            let data = '';
+            try {
+                // Try to decompress assuming it's GZIP
+                data = zlib.gunzipSync(buffer).toString('utf-8');
+            }
+            catch (err) {
+                // If decompression fails, assume it's a legacy plain JSON text file
+                data = buffer.toString('utf-8');
+            }
             return { data, filePath: filePaths[0] };
         }
         catch (e) {

@@ -972,25 +972,243 @@ export const PropertiesPanel = ({ selectedObject, systemFonts, onPropertyChange,
             {type === 'image' && (
                 <>
                     {!isCropping && (
-                        <button
-                            onClick={onStartCrop}
-                            style={{
-                                width: '100%',
-                                padding: '8px',
-                                fontSize: '11px',
-                                background: 'var(--input-bg)',
-                                color: 'var(--text-primary)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '4px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px'
-                            }}
-                        >
-                            <ImageIcon size={14} /> Crop Image
-                        </button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <button
+                                onClick={onStartCrop}
+                                style={{
+                                    width: '100%',
+                                    padding: '8px',
+                                    fontSize: '11px',
+                                    background: 'var(--input-bg)',
+                                    color: 'var(--text-primary)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px'
+                                }}
+                            >
+                                <ImageIcon size={14} /> Recadrer l'image
+                            </button>
+
+                            {/* FILTERS SECTION */}
+                            {renderSectionHeader('Filtres & Effets')}
+
+                            {/* Presets */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', marginBottom: '12px' }}>
+                                <button
+                                    onClick={() => {
+                                        const img = selectedObject as fabric.Image;
+                                        img.filters = []; // Clear
+                                        img.applyFilters();
+                                        onPropertyChange('dirty', true);
+                                    }}
+                                    style={iconButtonStyle}
+                                >
+                                    Original
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const img = selectedObject as fabric.Image;
+                                        const ns = (fabric as any).filters || (fabric.Image as any).filters;
+                                        if (ns && ns.Grayscale) {
+                                            img.filters = [new ns.Grayscale()];
+                                            img.applyFilters();
+                                            onPropertyChange('dirty', true);
+                                        }
+                                    }}
+                                    style={iconButtonStyle}
+                                >
+                                    N & B
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const img = selectedObject as fabric.Image;
+                                        const ns = (fabric as any).filters || (fabric.Image as any).filters;
+                                        if (ns && ns.Sepia) {
+                                            img.filters = [new ns.Sepia()];
+                                            img.applyFilters();
+                                            onPropertyChange('dirty', true);
+                                        }
+                                    }}
+                                    style={iconButtonStyle}
+                                >
+                                    Sépia
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        const img = selectedObject as fabric.Image;
+                                        const ns = (fabric as any).filters || (fabric.Image as any).filters;
+                                        if (ns && ns.Sepia && ns.Noise) {
+                                            // Vintage = Sepia + Noise
+                                            img.filters = [new ns.Sepia(), new ns.Noise({ noise: 100 })];
+                                            img.applyFilters();
+                                            onPropertyChange('dirty', true);
+                                        }
+                                    }}
+                                    style={iconButtonStyle}
+                                >
+                                    Vintage
+                                </button>
+                            </div>
+
+                            {/* Sliders */}
+                            {(() => {
+                                const img = selectedObject as fabric.Image;
+                                // Helper to find filter value
+                                const getFilterVal = (type: string, key: string, defaultVal: number) => {
+                                    // @ts-ignore
+                                    const filter = img.filters?.find(f => f.type === type);
+                                    return filter ? (filter as any)[key] : defaultVal;
+                                };
+
+                                const updateFilter = (type: string, key: string, val: number, ctorName: string) => {
+                                    // @ts-ignore
+                                    const Ctor = (fabric.filters?.[ctorName] || fabric.Image.filters[ctorName]);
+                                    if (!Ctor) return;
+
+                                    // @ts-ignore
+                                    let filter = img.filters?.find(f => f.type === type);
+
+                                    if (!filter) {
+                                        // Create if not exists (only if val is not default 0)
+                                        if (val === 0 && key !== 'contrast') return; // Optimize?
+                                        filter = new Ctor({ [key]: val });
+                                        if (filter) img.filters?.push(filter);
+                                    } else {
+                                        (filter as any)[key] = val;
+                                        // If value returns to default, maybe remove it?
+                                        // For now keep it simple.
+                                    }
+
+                                    img.applyFilters();
+                                    // Hack: Force React re-render of this panel? 
+                                    // Since we modify object directly, React might not know.
+                                    // But onPropertyChange triggers app update.
+                                    onPropertyChange('dirty', true);
+                                };
+
+                                return (
+                                    <>
+                                        {/* Brightness (-1 to 1) */}
+                                        {renderInputRow('Luminosité',
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <input
+                                                    type="range" min="-1" max="1" step="0.05"
+                                                    // Brightness filter type is usually 'Brightness'
+                                                    value={getFilterVal('Brightness', 'brightness', 0)}
+                                                    onChange={(e) => updateFilter('Brightness', 'brightness', parseFloat(e.target.value), 'Brightness')}
+                                                    style={{ flex: 1 }}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Contrast (-1 to 1) */}
+                                        {renderInputRow('Contraste',
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <input
+                                                    type="range" min="-1" max="1" step="0.05"
+                                                    value={getFilterVal('Contrast', 'contrast', 0)}
+                                                    onChange={(e) => updateFilter('Contrast', 'contrast', parseFloat(e.target.value), 'Contrast')}
+                                                    style={{ flex: 1 }}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Blur (0 to 1) */}
+                                        {renderInputRow('Flou',
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <input
+                                                    type="range" min="0" max="1" step="0.05"
+                                                    value={getFilterVal('Blur', 'blur', 0)}
+                                                    onChange={(e) => updateFilter('Blur', 'blur', parseFloat(e.target.value), 'Blur')}
+                                                    style={{ flex: 1 }}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Tint (BlendColor) */}
+                                        {/* Since BlendColor is specific, we implement it manually here */}
+                                        {(() => {
+                                            const tintFilter = (img.filters as any[])?.find(f => f.type === 'BlendColor');
+
+                                            // Handle update
+                                            const updateTint = (newColor: string | null, newAlpha: number) => {
+                                                const ns = (fabric as any).filters || (fabric.Image as any).filters;
+                                                if (!ns || !ns.BlendColor) return;
+
+                                                // Remove existing
+                                                img.filters = img.filters?.filter(f => f.type !== 'BlendColor');
+
+                                                if (newColor) {
+                                                    // Add new
+                                                    img.filters?.push(new ns.BlendColor({
+                                                        color: newColor,
+                                                        mode: 'tint',
+                                                        alpha: newAlpha
+                                                    }));
+                                                }
+                                                img.applyFilters();
+                                                onPropertyChange('dirty', true);
+                                            };
+
+                                            return (
+                                                <>
+                                                    {renderSectionHeader('Teinte (Colorisation)')}
+                                                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!tintFilter}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    // Enable Tint (Default Sepia-ish)
+                                                                    updateTint('#704214', 0.5);
+                                                                } else {
+                                                                    // Disable
+                                                                    updateTint(null, 0);
+                                                                }
+                                                            }}
+                                                            style={{ marginRight: '8px' }}
+                                                        />
+                                                        <label style={{ fontSize: '12px', color: 'var(--text-primary)' }}>Activer la teinte</label>
+                                                    </div>
+
+                                                    {tintFilter && (
+                                                        <div style={{ paddingLeft: '8px', borderLeft: '2px solid var(--border-color)' }}>
+                                                            {/* Color Picker */}
+                                                            <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                                <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Couleur</label>
+                                                                <input
+                                                                    type="color"
+                                                                    value={tintFilter.color}
+                                                                    onChange={(e) => updateTint(e.target.value, tintFilter.alpha)}
+                                                                    style={{ border: 'none', background: 'transparent', height: '20px', width: '30px', cursor: 'pointer' }}
+                                                                />
+                                                            </div>
+                                                            {/* Alpha Slider */}
+                                                            {renderInputRow('Opacité',
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                    <input
+                                                                        type="range" min="0" max="1" step="0.05"
+                                                                        value={tintFilter.alpha}
+                                                                        onChange={(e) => updateTint(tintFilter.color, parseFloat(e.target.value))}
+                                                                        style={{ flex: 1 }}
+                                                                    />
+                                                                    <span style={{ fontSize: '11px', width: '25px', textAlign: 'right' }}>{tintFilter.alpha}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
+                                    </>
+                                );
+                            })()}
+
+                        </div>
                     )}
                 </>
             )}

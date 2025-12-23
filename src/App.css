@@ -111,6 +111,39 @@ button:disabled {
   min-height: 110px;
   height: 110px;
   scrollbar-width: thin;
+  transition: height 0.3s ease, min-height 0.3s ease;
+  position: relative;
+}
+
+.bottom-page-strip.collapsed {
+  min-height: 32px;
+  height: 32px;
+  padding: 0 10px;
+  overflow: hidden;
+}
+
+.collapse-pages-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-right: none;
+  border-top: none;
+  border-bottom-left-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  color: var(--text-muted);
+}
+
+.collapse-pages-btn:hover {
+  background: var(--bg-header);
+  color: var(--text-primary);
 }
 
 .page-thumbnail {

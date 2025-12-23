@@ -2,7 +2,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_account-login",
         "name": "account-login",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M3 0v1h4v5h-4v1h5v-7h-5zm1 2v1h-4v1h4v1l2-1.5-2-1.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -10,7 +10,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_account-logout",
         "name": "account-logout",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M3 0v1h4v5h-4v1h5v-7h-5zm-1 2l-2 1.5 2 1.5v-1h4v-1h-4v-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -18,7 +18,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_action-redo",
         "name": "action-redo",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M3.5 1c-1.93 0-3.5 1.57-3.5 3.5 0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v.5h-1l2 2 2-2h-1v-.5c0-1.93-1.57-3.5-3.5-3.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -26,7 +26,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_action-undo",
         "name": "action-undo",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M4.5 1c-1.93 0-3.5 1.57-3.5 3.5v.5h-1l2 2 2-2h-1v-.5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5c0-1.93-1.57-3.5-3.5-3.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -34,7 +34,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_align-center",
         "name": "align-center",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M0 0v1h8v-1h-8zm1 2v1h6v-1h-6zm-1 2v1h8v-1h-8zm1 2v1h6v-1h-6z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -42,7 +42,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_align-left",
         "name": "align-left",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M0 0v1h8v-1h-8zm0 2v1h6v-1h-6zm0 2v1h8v-1h-8zm0 2v1h6v-1h-6z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -50,7 +50,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_align-right",
         "name": "align-right",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M0 0v1h8v-1h-8zm2 2v1h6v-1h-6zm-2 2v1h8v-1h-8zm2 2v1h6v-1h-6z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -178,7 +178,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_badge",
         "name": "badge",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M4 0c-1.105 0-2 .895-2 2s.895 2 2 2 2-.895 2-2-.895-2-2-2zm-1 4.813v3.188l1-1 1 1v-3.188c-.31.11-.65.188-1 .188s-.69-.077-1-.188z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -186,7 +186,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_ban",
         "name": "ban",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M4 0c-2.203 0-4 1.797-4 4 0 2.203 1.797 4 4 4 2.203 0 4-1.797 4-4 0-2.203-1.797-4-4-4zm0 1c.655 0 1.258.209 1.75.563l-4.188 4.188c-.353-.492-.563-1.095-.563-1.75 0-1.663 1.337-3 3-3zm2.438 1.25c.353.492.563 1.095.563 1.75 0 1.663-1.337 3-3 3-.655 0-1.258-.209-1.75-.563l4.188-4.188z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -194,7 +194,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_bar-chart",
         "name": "bar-chart",
-        "category": "Autres (OI)",
+        "category": "Commerce",
         "path": "M0 0v7h8v-1h-7v-6h-1zm5 0v5h2v-5h-2zm-3 2v3h2v-3h-2z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -202,7 +202,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_basket",
         "name": "basket",
-        "category": "Autres (OI)",
+        "category": "Commerce",
         "path": "M3.969 0c-.127.011-.259.083-.344.188l-2.344 2.813h-1.281v1h1v3.656c0 .18.164.344.344.344h5.313c.18 0 .344-.164.344-.344v-3.656h1v-1h-1.281c-.274-.329-2.387-2.866-2.406-2.875-.105-.09-.216-.136-.344-.125zm.031 1.281l1.438 1.719h-2.875l1.438-1.719zm-1.5 3.719c.28 0 .5.22.5.5v1c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-1c0-.28.22-.5.5-.5zm3 0c.28 0 .5.22.5.5v1c0 .28-.22.5-.5.5s-.5-.22-.5-.5v-1c0-.28.22-.5.5-.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -210,7 +210,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_battery-empty",
         "name": "battery-empty",
-        "category": "Autres (OI)",
+        "category": "Appareils",
         "path": "M.094 1c-.06 0-.094.034-.094.094v5.813c0 .06.034.094.094.094h6.813c.06 0 .094-.034.094-.094v-1.906h1v-2h-1v-1.906c0-.06-.034-.094-.094-.094h-6.813zm.906 1h5v4h-5v-4z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -218,7 +218,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_battery-full",
         "name": "battery-full",
-        "category": "Autres (OI)",
+        "category": "Appareils",
         "path": "M.094 1c-.06 0-.094.034-.094.094v5.813c0 .06.034.094.094.094h6.813c.06 0 .094-.034.094-.094v-1.906h1v-2h-1v-1.906c0-.06-.034-.094-.094-.094h-6.813z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -226,7 +226,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_beaker",
         "name": "beaker",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M1.344 0a.502.502 0 0 0 .156 1h.5v1.406c-.088.172-1.194 2.313-1.656 3.094-.153.268-.344.612-.344 1.063 0 .383.139.764.406 1.031.26.26.643.406 1.031.406h5.125c.383 0 .764-.139 1.031-.406.26-.26.406-.643.406-1.031 0-.452-.194-.801-.344-1.063-.463-.78-1.568-2.922-1.656-3.094v-1.406h.5a.5.5 0 1 0 0-1h-5a.5.5 0 0 0-.094 0 .502.502 0 0 0-.063 0zm1.656 1h2v1.625l.063.094s.652 1.233 1.219 2.281h-4.563c.567-1.049 1.219-2.281 1.219-2.281l.063-.094v-1.625z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -234,7 +234,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_bell",
         "name": "bell",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M4 0c-1.1 0-2 .9-2 2 0 1.04-.524 1.976-1.344 2.656-.42.34-.656.824-.656 1.344h8c0-.52-.236-1.004-.656-1.344-.82-.68-1.344-1.616-1.344-2.656 0-1.1-.9-2-2-2zm-1 7c0 .55.45 1 1 1s1-.45 1-1h-2z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -242,7 +242,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_bluetooth",
         "name": "bluetooth",
-        "category": "Autres (OI)",
+        "category": "Réseau",
         "path": "M2.5 0v2.5l-.75-.75-.75.75 1.5 1.5-1.5 1.5.75.75.75-.75v2.5h.5l3.5-2.5-2.25-1.531 2.25-1.469-3.5-2.5h-.5zm1 1.5l1.5 1-1.5 1v-2zm0 3l1.5 1-1.5 1v-2z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -250,7 +250,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_bold",
         "name": "bold",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M0 0v1c.55 0 1 .45 1 1v4c0 .55-.45 1-1 1v1h5.5c1.38 0 2.5-1.12 2.5-2.5 0-1-.588-1.85-1.438-2.25.27-.34.438-.78.438-1.25 0-1.1-.9-2-2-2h-5zm3 1h1c.55 0 1 .45 1 1s-.45 1-1 1h-1v-2zm0 3h1.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-1.5v-3z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -266,7 +266,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_book",
         "name": "book",
-        "category": "Autres (OI)",
+        "category": "Média",
         "path": "M1 0l-.188.031c-.39.08-.701.391-.781.781l-.031.188v5.5c0 .83.67 1.5 1.5 1.5h5.5v-1h-5.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5h5.5v-5.5c0-.28-.22-.5-.5-.5h-.5v3l-1-1-1 1v-3h-3z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -274,7 +274,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_bookmark",
         "name": "bookmark",
-        "category": "Autres (OI)",
+        "category": "Média",
         "path": "M2 0v8l2-2 2 2v-8h-4z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -314,7 +314,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_brush",
         "name": "brush",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M7.438.031l-.063.031-3.75 2.656-.125.156-.125.25c.719.229 1.271.781 1.5 1.5l.25-.125c.05-.02.126-.075.156-.125l2.656-3.75c.03-.04.04-.116 0-.156l-.406-.406-.094-.031zm-4.781 3.969c-.73 0-1.313.614-1.313 1.344 0 .99-.544 1.821-1.344 2.281.4.23.864.375 1.344.375 1.48 0 2.656-1.176 2.656-2.656 0-.73-.604-1.344-1.344-1.344z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -346,7 +346,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_calendar",
         "name": "calendar",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M0 0v2h7v-2h-7zm0 3v4.906c0 .06.034.094.094.094h6.813c.06 0 .094-.034.094-.094v-4.906h-7zm1 1h1v1h-1v-1zm2 0h1v1h-1v-1zm2 0h1v1h-1v-1zm-4 2h1v1h-1v-1zm2 0h1v1h-1v-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -394,7 +394,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_cart",
         "name": "cart",
-        "category": "Autres (OI)",
+        "category": "Commerce",
         "path": "M.344 0a.502.502 0 0 0 .156 1h1.5l.094.25.406 1.25.406 1.25c.04.13.204.25.344.25h3.5c.14 0 .304-.12.344-.25l.813-2.531c.04-.12-.016-.219-.156-.219h-4.438l-.375-.719a.5.5 0 0 0-.438-.281h-2a.5.5 0 0 0-.094 0 .502.502 0 0 0-.063 0zm3.156 5c-.276 0-.5.224-.5.5s.224.5.5.5.5-.224.5-.5-.224-.5-.5-.5zm3 0c-.276 0-.5.224-.5.5s.224.5.5.5.5-.224.5-.5-.224-.5-.5-.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -410,7 +410,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_check",
         "name": "check",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M6.406 1l-.719.688-2.781 2.781-.781-.781-.719-.688-1.406 1.406.688.719 1.5 1.5.719.688.719-.688 3.5-3.5.688-.719-1.406-1.406z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -450,7 +450,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_circle-check",
         "name": "circle-check",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M4 0c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm2 1.781l.719.719-3.219 3.219-1.719-1.719.719-.719 1 1 2.5-2.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -458,7 +458,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_circle-x",
         "name": "circle-x",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M4 0c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-1.5 1.781l1.5 1.5 1.5-1.5.719.719-1.5 1.5 1.5 1.5-.719.719-1.5-1.5-1.5 1.5-.719-.719 1.5-1.5-1.5-1.5.719-.719z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -466,7 +466,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_clipboard",
         "name": "clipboard",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M3.5 0c-.28 0-.5.22-.5.5v.5h-.75c-.14 0-.25.11-.25.25v.75h3v-.75c0-.14-.11-.25-.25-.25h-.75v-.5c0-.28-.22-.5-.5-.5zm-3.25 1c-.14 0-.25.11-.25.25v6.5c0 .14.11.25.25.25h6.5c.14 0 .25-.11.25-.25v-6.5c0-.14-.11-.25-.25-.25h-.75v2h-5v-2h-.75z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -474,7 +474,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_clock",
         "name": "clock",
-        "category": "Autres (OI)",
+        "category": "Sécurité",
         "path": "M4 0c-2.203 0-4 1.797-4 4 0 2.203 1.797 4 4 4 2.203 0 4-1.797 4-4 0-2.203-1.797-4-4-4zm0 1c1.663 0 3 1.337 3 3s-1.337 3-3 3-3-1.337-3-3 1.337-3 3-3zm-.5 1v2.219l.156.125.5.5.344.375.719-.719-.375-.344-.344-.344v-1.813h-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -514,7 +514,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_code",
         "name": "code",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M5 1l-3 6h1l3-6h-1zm-4 1l-1 2 1 2h1l-1-2 1-2h-1zm5 0l1 2-1 2h1l1-2-1-2h-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -562,7 +562,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_command",
         "name": "command",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M1.5 0c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5h.5v1h-.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5v-.5h1v.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5h-.5v-1h.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5v.5h-1v-.5c0-.83-.67-1.5-1.5-1.5zm0 1c.28 0 .5.22.5.5v.5h-.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5zm4 0c.28 0 .5.22.5.5s-.22.5-.5.5h-.5v-.5c0-.28.22-.5.5-.5zm-2.5 2h1v1h-1v-1zm-1.5 2h.5v.5c0 .28-.22.5-.5.5s-.5-.22-.5-.5.22-.5.5-.5zm3.5 0h.5c.28 0 .5.22.5.5s-.22.5-.5.5-.5-.22-.5-.5v-.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -586,7 +586,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_contrast",
         "name": "contrast",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M4 0c-2.203 0-4 1.797-4 4 0 2.203 1.797 4 4 4 2.203 0 4-1.797 4-4 0-2.203-1.797-4-4-4zm0 1c1.663 0 3 1.337 3 3s-1.337 3-3 3v-6z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -594,7 +594,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_copywriting",
         "name": "copywriting",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M0 0v1h8v-1h-8zm0 2v1h5v-1h-5zm0 3v1h8v-1h-8zm0 2v1h6v-1h-6zm7.5 0c-.276 0-.5.224-.5.5s.224.5.5.5.5-.224.5-.5-.224-.5-.5-.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -602,7 +602,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_credit-card",
         "name": "credit-card",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M.25 1c-.14 0-.25.11-.25.25v.75h8v-.75c0-.14-.11-.25-.25-.25h-7.5zm-.25 2v3.75c0 .14.11.25.25.25h7.5c.14 0 .25-.11.25-.25v-3.75h-8zm1 2h1v1h-1v-1zm2 0h1v1h-1v-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -610,7 +610,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_crop",
         "name": "crop",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M1 0v1h-1v1h1v5h5v1h1v-1h1v-1h-1v-4.5l1-1-.5-.5-1 1h-4.5v-1h-1zm1 2h3.5l-3.5 3.5v-3.5zm4 .5v3.5h-3.5l3.5-3.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -618,7 +618,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_dashboard",
         "name": "dashboard",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M4 0c-2.203 0-4 1.797-4 4 0 2.203 1.797 4 4 4 2.203 0 4-1.797 4-4 0-2.203-1.797-4-4-4zm0 1c1.663 0 3 1.337 3 3s-1.337 3-3 3-3-1.337-3-3 1.337-3 3-3zm0 1c-.276 0-.5.224-.5.5s.224.5.5.5.5-.224.5-.5-.224-.5-.5-.5zm-1.656 1a.5.5 0 0 0-.188.844l.906.906-.063.25c0 .552.448 1 1 1s1-.448 1-1-.448-1-1-1l-.25.063-.906-.906a.5.5 0 0 0-.438-.156.5.5 0 0 0-.063 0zm3.156 0c-.276 0-.5.224-.5.5s.224.5.5.5.5-.224.5-.5-.224-.5-.5-.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -626,7 +626,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_data-transfer-download",
         "name": "data-transfer-download",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M3 0v3h-2l3 3 3-3h-2v-3h-2zm-3 7v1h8v-1h-8z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -634,7 +634,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_data-transfer-upload",
         "name": "data-transfer-upload",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M0 0v1h8v-1h-8zm4 2l-3 3h2v3h2v-3h2l-3-3z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -658,7 +658,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_document",
         "name": "document",
-        "category": "Autres (OI)",
+        "category": "Fichiers",
         "path": "M0 0v8h7v-4h-4v-4h-3zm4 0v3h3l-3-3zm-3 2h1v1h-1v-1zm0 2h1v1h-1v-1zm0 2h4v1h-4v-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -666,7 +666,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_dollar",
         "name": "dollar",
-        "category": "Autres (OI)",
+        "category": "Commerce",
         "path": "M3 0v1h-.75c-.686 0-1.25.564-1.25 1.25v.5c0 .678.437 1.242 1.094 1.406l2.563.656c.143.036.344.296.344.438v.5c0 .134-.116.25-.25.25h-2.5c-.116 0-.212-.037-.25-.063v-.938h-1v1c0 .342.203.627.438.781.234.155.518.219.813.219h.75v1h1v-1h.75c.686 0 1.25-.564 1.25-1.25v-.5c0-.678-.437-1.242-1.094-1.406l-2.563-.656c-.143-.036-.344-.296-.344-.438v-.5c0-.134.116-.25.25-.25h2.5c.116 0 .212.037.25.063v.938h1v-1c0-.342-.203-.627-.438-.781-.234-.155-.518-.219-.813-.219h-.75v-1h-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -754,7 +754,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_euro",
         "name": "euro",
-        "category": "Autres (OI)",
+        "category": "Commerce",
         "path": "M5 0c-1.858 0-3.398 1.278-3.844 3h-1.906l-.25 1h2c0 .345.073.68.156 1h-1.969l-.188 1h2.563c.696 1.185 1.969 2 3.438 2 .734 0 1.407-.215 2-.563v-1.219c-.531.479-1.225.781-2 .781-.888 0-1.671-.392-2.219-1h2.219l.156-1h-2.969c-.113-.317-.188-.643-.188-1h3.344l.156-1h-3.313c.414-1.16 1.507-2 2.813-2 .655 0 1.258.209 1.75.563l.156-1.063c-.57-.313-1.213-.5-1.906-.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -762,7 +762,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_excerpt",
         "name": "excerpt",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M0 0v1h7v-1h-7zm0 2v1h5v-1h-5zm0 2v1h8v-1h-8zm0 2v1h1v-1h-1zm2 0v1h1v-1h-1zm2 0v1h1v-1h-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -770,7 +770,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_expand-down",
         "name": "expand-down",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M0 0v1h8v-1h-8zm2 2l2 2 2-2h-4zm-2 4v2h8v-2h-8z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -778,7 +778,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_expand-left",
         "name": "expand-left",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M0 0v8h1v-8h-1zm6 0v8h2v-8h-2zm-4 2v4l2-2-2-2z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -786,7 +786,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_expand-right",
         "name": "expand-right",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M0 0v8h2v-8h-2zm7 0v8h1v-8h-1zm-1 2l-2 2 2 2v-4z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -794,7 +794,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_expand-up",
         "name": "expand-up",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M0 0v2h8v-2h-8zm4 4l-2 2h4l-2-2zm-4 3v1h8v-1h-8z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -802,7 +802,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_external-link",
         "name": "external-link",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M0 0v8h8v-2h-1v1h-6v-6h1v-1h-2zm4 0l1.5 1.5-2.5 2.5 1 1 2.5-2.5 1.5 1.5v-4h-4z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -810,7 +810,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_eye",
         "name": "eye",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M4.031 1c-2.53 0-4.031 3-4.031 3s1.501 3 4.031 3c2.47 0 3.969-3 3.969-3s-1.499-3-3.969-3zm-.031 1c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm0 1c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1c0-.1-.032-.191-.063-.281-.08.16-.237.281-.438.281-.28 0-.5-.22-.5-.5 0-.2.121-.357.281-.438-.09-.03-.181-.063-.281-.063z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -818,7 +818,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_eyedropper",
         "name": "eyedropper",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M3.313 0a.5.5 0 0 0-.188.844l.625.625-3.594 3.656-.156.156v2.719h2.719l.125-.156 3.656-3.656.625.656a.5.5 0 1 0 .719-.688l-.938-.938.656-.656c.59-.58.59-1.545 0-2.125-.56-.57-1.555-.57-2.125 0l-.656.656-.938-.938a.5.5 0 0 0-.469-.156.5.5 0 0 0-.063 0zm1.156 2.188l1.313 1.313-3.156 3.156-1.281-1.313 3.125-3.156z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -826,7 +826,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_file",
         "name": "file",
-        "category": "Interface",
+        "category": "Fichiers",
         "path": "M0 0v8h7v-4h-4v-4h-3zm4 0v3h3l-3-3z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -858,7 +858,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_folder",
         "name": "folder",
-        "category": "Interface",
+        "category": "Fichiers",
         "path": "M0 0v2h8v-1h-5v-1h-3zm0 3v4.5c0 .28.22.5.5.5h7c.28 0 .5-.22.5-.5v-4.5h-8z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -866,7 +866,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_fork",
         "name": "fork",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M1.5 0c-.828 0-1.5.672-1.5 1.5 0 .656.414 1.202 1 1.406v2.188c-.586.204-1 .75-1 1.406 0 .828.672 1.5 1.5 1.5s1.5-.672 1.5-1.5c0-.595-.341-1.101-.844-1.344.09-.09.205-.156.344-.156h2c.823 0 1.5-.677 1.5-1.5v-.594c.586-.204 1-.75 1-1.406 0-.828-.672-1.5-1.5-1.5s-1.5.672-1.5 1.5c0 .656.414 1.202 1 1.406v.594c0 .277-.223.5-.5.5h-2c-.171 0-.346.04-.5.094v-1.188c.586-.204 1-.75 1-1.406 0-.828-.672-1.5-1.5-1.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -882,7 +882,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_fullscreen-exit",
         "name": "fullscreen-exit",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M1 0l-1 1 1.5 1.5-1.5 1.5h4v-4l-1.5 1.5-1.5-1.5zm3 4v4l1.5-1.5 1.5 1.5 1-1-1.5-1.5 1.5-1.5h-4z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -898,7 +898,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_graph",
         "name": "graph",
-        "category": "Autres (OI)",
+        "category": "Commerce",
         "path": "M7.031 0l-3.031 3-1-1-3 3.031 1 1 2-2.031 1 1 4-4-.969-1zm-7.031 7v1h8v-1h-8z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -906,7 +906,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_grid-four-up",
         "name": "grid-four-up",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M0 0v1h1v-1h-1zm2 0v1h1v-1h-1zm2 0v1h1v-1h-1zm2 0v1h1v-1h-1zm-6 2v1h1v-1h-1zm2 0v1h1v-1h-1zm2 0v1h1v-1h-1zm2 0v1h1v-1h-1zm-6 2v1h1v-1h-1zm2 0v1h1v-1h-1zm2 0v1h1v-1h-1zm2 0v1h1v-1h-1zm-6 2v1h1v-1h-1zm2 0v1h1v-1h-1zm2 0v1h1v-1h-1zm2 0v1h1v-1h-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -914,7 +914,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_grid-three-up",
         "name": "grid-three-up",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M0 0v2h2v-2h-2zm3 0v2h2v-2h-2zm3 0v2h2v-2h-2zm-6 3v2h2v-2h-2zm3 0v2h2v-2h-2zm3 0v2h2v-2h-2zm-6 3v2h2v-2h-2zm3 0v2h2v-2h-2zm3 0v2h2v-2h-2z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -922,7 +922,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_grid-two-up",
         "name": "grid-two-up",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M0 0v3h3v-3h-3zm5 0v3h3v-3h-3zm-5 5v3h3v-3h-3zm5 0v3h3v-3h-3z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -938,7 +938,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_header",
         "name": "header",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M0 0v1h.5c.28 0 .5.22.5.5v4c0 .28-.22.5-.5.5h-.5v1h3v-1h-.5c-.28 0-.5-.22-.5-.5v-1.5h3v1.5c0 .28-.22.5-.5.5h-.5v1h3v-1h-.5c-.28 0-.5-.22-.5-.5v-4c0-.28.22-.5.5-.5h.5v-1h-3v1h.5c.28 0 .5.22.5.5v1.5h-3v-1.5c0-.28.22-.5.5-.5h.5v-1h-3z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -946,7 +946,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_headphones",
         "name": "headphones",
-        "category": "Communication",
+        "category": "Appareils",
         "path": "M4 0c-1.651 0-3 1.349-3 3v1h-.5a.5.5 0 0 0-.5.5v2a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-3.5c0-1.109.891-2 2-2s2 .891 2 2v3.5a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-2a.5.5 0 0 0-.5-.5h-.5v-1c0-1.651-1.349-3-3-3z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -970,7 +970,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_image",
         "name": "image",
-        "category": "Autres (OI)",
+        "category": "Média",
         "path": "M0 0v8h8v-8h-8zm1 1h6v3l-1-1-1 1 2 2v1h-1l-4-4-1 1v-3z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -994,7 +994,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_info",
         "name": "info",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M5 0c-.552 0-1 .448-1 1s.448 1 1 1 1-.448 1-1-.448-1-1-1zm-1.5 2.5c-.83 0-1.5.67-1.5 1.5h1c0-.28.22-.5.5-.5s.5.22.5.5-1 1.64-1 2.5c0 .86.67 1.5 1.5 1.5s1.5-.67 1.5-1.5h-1c0 .28-.22.5-.5.5s-.5-.22-.5-.5c0-.36 1-1.84 1-2.5 0-.81-.67-1.5-1.5-1.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1002,7 +1002,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_italic",
         "name": "italic",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M2 0v1h1.625l-.063.125-2 5-.344.875h-1.219v1h5v-1h-1.625l.063-.125 2-5 .344-.875h1.219v-1h-5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1010,7 +1010,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_justify-center",
         "name": "justify-center",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M0 0v1h8v-1h-8zm0 2v1h8v-1h-8zm0 2v1h8v-1h-8zm1 2v1h6v-1h-6z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1018,7 +1018,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_justify-left",
         "name": "justify-left",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M0 0v1h8v-1h-8zm0 2v1h8v-1h-8zm0 2v1h8v-1h-8zm0 2v1h6v-1h-6z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1026,7 +1026,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_justify-right",
         "name": "justify-right",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M0 0v1h8v-1h-8zm0 2v1h8v-1h-8zm0 2v1h8v-1h-8zm2 2v1h6v-1h-6z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1034,7 +1034,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_key",
         "name": "key",
-        "category": "Autres (OI)",
+        "category": "Sécurité",
         "path": "M5.5 0c-1.38 0-2.5 1.12-2.5 2.5 0 .16.033.297.063.438l-3.063 3.063v2h3v-2h2v-1l.063-.063c.14.03.277.063.438.063 1.38 0 2.5-1.12 2.5-2.5s-1.12-2.5-2.5-2.5zm.5 1c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1042,7 +1042,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_laptop",
         "name": "laptop",
-        "category": "Autres (OI)",
+        "category": "Appareils",
         "path": "M1.344 0a.5.5 0 0 0-.344.5v3.5h-1v1.5c0 .28.22.5.5.5h7c.28 0 .5-.22.5-.5v-1.5h-1v-3.5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0-.094 0 .5.5 0 0 0-.063 0zm.656 1h4v3h-1v1h-2v-1h-1v-3z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1066,7 +1066,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_link-broken",
         "name": "link-broken",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M2 0v1h-1v1h2v-2h-1zm3.875.031c-.184.01-.354.03-.531.094-.27.095-.531.25-.75.469l-.438.438a.5.5 0 1 0 .688.688l.438-.438c.101-.101.245-.173.375-.219.352-.126.78-.064 1.063.219.395.389.4 1.037 0 1.438l-1.5 1.5a.5.5 0 1 0 .688.688l1.5-1.5c.78-.78.785-2.041 0-2.813-.279-.279-.606-.452-.969-.531-.181-.039-.379-.041-.563-.031zm-3.594 2.906a.5.5 0 0 0-.188.156l-1.5 1.5c-.78.78-.785 2.041 0 2.813.557.557 1.355.722 2.063.469.27-.095.531-.25.75-.469l.438-.438a.5.5 0 1 0-.688-.688l-.438.438c-.101.101-.245.173-.375.219-.352.126-.78.064-1.063-.219-.395-.389-.4-1.037 0-1.438l1.5-1.5a.5.5 0 0 0-.438-.844.5.5 0 0 0-.063 0zm2.719 3.063v2h1v-1h1v-1h-2z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1074,7 +1074,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_link-intact",
         "name": "link-intact",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M5.875.031c-.184.01-.354.03-.531.094-.27.095-.531.25-.75.469a.5.5 0 1 0 .688.688c.101-.101.245-.173.375-.219.352-.126.78-.064 1.063.219.395.389.4 1.037 0 1.438l-1.5 1.5c-.434.434-.799.483-1.063.469-.264-.015-.406-.125-.406-.125a.504.504 0 1 0-.5.875s.34.222.844.25c.504.028 1.197-.165 1.813-.781l1.5-1.5c.78-.78.785-2.041 0-2.813-.279-.279-.606-.452-.969-.531-.181-.039-.379-.041-.563-.031zm-2 2.313c-.501-.019-1.186.155-1.781.75l-1.5 1.5c-.78.78-.785 2.041 0 2.813.557.557 1.355.722 2.063.469.27-.095.531-.25.75-.469a.5.5 0 1 0-.688-.688c-.101.101-.245.173-.375.219-.352.126-.78.064-1.063-.219-.395-.389-.4-1.037 0-1.438l1.5-1.5c.405-.405.752-.448 1.031-.438.279.011.469.094.469.094a.5.5 0 1 0 .438-.875s-.343-.199-.844-.219z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1082,7 +1082,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_list-rich",
         "name": "list-rich",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M0 0v3h3v-3h-3zm4 0v1h4v-1h-4zm0 2v1h3v-1h-3zm-4 2v3h3v-3h-3zm4 0v1h4v-1h-4zm0 2v1h3v-1h-3z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1090,7 +1090,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_list",
         "name": "list",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M.5 0c-.276 0-.5.224-.5.5s.224.5.5.5.5-.224.5-.5-.224-.5-.5-.5zm1.5 0v1h6v-1h-6zm-1.5 2c-.276 0-.5.224-.5.5s.224.5.5.5.5-.224.5-.5-.224-.5-.5-.5zm1.5 0v1h6v-1h-6zm-1.5 2c-.276 0-.5.224-.5.5s.224.5.5.5.5-.224.5-.5-.224-.5-.5-.5zm1.5 0v1h6v-1h-6zm-1.5 2c-.276 0-.5.224-.5.5s.224.5.5.5.5-.224.5-.5-.224-.5-.5-.5zm1.5 0v1h6v-1h-6z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1106,7 +1106,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_lock-locked",
         "name": "lock-locked",
-        "category": "Autres (OI)",
+        "category": "Sécurité",
         "path": "M4 0c-1.099 0-2 .901-2 2v1h-1v4h6v-4h-1v-1c0-1.099-.901-2-2-2zm0 1c.561 0 1 .439 1 1v1h-2v-1c0-.561.439-1 1-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1114,7 +1114,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_lock-unlocked",
         "name": "lock-unlocked",
-        "category": "Autres (OI)",
+        "category": "Sécurité",
         "path": "M4 0c-1.099 0-2 .901-2 2h1c0-.561.439-1 1-1 .561 0 1 .439 1 1v2h-4v4h6v-4h-1v-2c0-1.099-.901-2-2-2z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1122,7 +1122,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_loop-circular",
         "name": "loop-circular",
-        "category": "Autres (OI)",
+        "category": "Média",
         "path": "M4 1c-1.651 0-3 1.349-3 3h-1l1.5 2 1.5-2h-1c0-1.109.891-2 2-2v-1zm2.5 1l-1.5 2h1c0 1.109-.891 2-2 2v1c1.651 0 3-1.349 3-3h1l-1.5-2z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1130,7 +1130,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_loop-square",
         "name": "loop-square",
-        "category": "Autres (OI)",
+        "category": "Média",
         "path": "M1 0v2h1v-1h4v2h-1l1.5 2.5 1.5-2.5h-1v-3h-6zm.5 2.5l-1.5 2.5h1v3h6v-2h-1v1h-4v-2h1l-1.5-2.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1138,7 +1138,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_loop",
         "name": "loop",
-        "category": "Autres (OI)",
+        "category": "Média",
         "path": "M6 0v1h-5c-.554 0-1 .446-1 1v1h1v-1h5v1l2-1.5-2-1.5zm-4 4l-2 1.5 2 1.5v-1h5c.542 0 1-.458 1-1v-1h-1v1h-5v-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1146,7 +1146,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_magnifying-glass",
         "name": "magnifying-glass",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M3.5 0c-1.927 0-3.5 1.573-3.5 3.5s1.573 3.5 3.5 3.5c.592 0 1.166-.145 1.656-.406a1 1 0 0 0 .125.125l1 1a1.016 1.016 0 1 0 1.438-1.438l-1-1a1 1 0 0 0-.156-.125c.266-.493.438-1.059.438-1.656 0-1.927-1.573-3.5-3.5-3.5zm0 1c1.387 0 2.5 1.113 2.5 2.5 0 .661-.241 1.273-.656 1.719l-.031.031a1 1 0 0 0-.125.125c-.442.397-1.043.625-1.688.625-1.387 0-2.5-1.113-2.5-2.5s1.113-2.5 2.5-2.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1250,7 +1250,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_microphone",
         "name": "microphone",
-        "category": "Communication",
+        "category": "Appareils",
         "path": "M2.906-.031a1 1 0 0 0-.125.031 1 1 0 0 0-.781 1v2a1 1 0 1 0 2 0v-2a1 1 0 0 0-1.094-1.031zm-2.563 2.031a.5.5 0 0 0-.344.5v.5c0 1.476 1.091 2.693 2.5 2.938v1.063h-.5c-.55 0-1 .45-1 1h4c0-.55-.45-1-1-1h-.5v-1.063c1.409-.244 2.5-1.461 2.5-2.938v-.5a.5.5 0 1 0-1 0v.5c0 1.109-.891 2-2 2s-2-.891-2-2v-.5a.5.5 0 0 0-.594-.5.5.5 0 0 0-.063 0z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1258,7 +1258,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_minus",
         "name": "minus",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M0 3v2h8v-2h-8z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1266,7 +1266,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_monitor",
         "name": "monitor",
-        "category": "Autres (OI)",
+        "category": "Appareils",
         "path": "M.344 0a.5.5 0 0 0-.344.5v5a.5.5 0 0 0 .5.5h2.5v1h-1c-.55 0-1 .45-1 1h6c0-.55-.45-1-1-1h-1v-1h2.5a.5.5 0 0 0 .5-.5v-5a.5.5 0 0 0-.5-.5h-7a.5.5 0 0 0-.094 0 .5.5 0 0 0-.063 0zm.656 1h6v4h-6v-4z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1306,7 +1306,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_pencil",
         "name": "pencil",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M6 0l-1 1 2 2 1-1-2-2zm-2 2l-4 4v2h2l4-4-2-2z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1330,7 +1330,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_phone",
         "name": "phone",
-        "category": "Communication",
+        "category": "Appareils",
         "path": "M1.188 0c-.11 0-.188.077-.188.188v7.625c0 .11.077.188.188.188h4.625c.11 0 .188-.077.188-.188v-7.625c0-.11-.077-.188-.188-.188h-4.625zm.813 1h3v5h-3v-5zm1.5 5.5c.28 0 .5.22.5.5s-.22.5-.5.5-.5-.22-.5-.5.22-.5.5-.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1338,7 +1338,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_pie-chart",
         "name": "pie-chart",
-        "category": "Autres (OI)",
+        "category": "Commerce",
         "path": "M3.5 0c-.97 0-1.839.391-2.469 1.031l2.969 2.969v-3.969c-.16-.03-.33-.031-.5-.031zm1.5 1.063v3.406l-2.719 2.719c.6.5 1.369.813 2.219.813 1.93 0 3.5-1.57 3.5-3.5 0-1.76-1.31-3.197-3-3.438zm-4.094 1.313c-.55.54-.906 1.285-.906 2.125 0 .95.435 1.804 1.125 2.344l2.156-2.125-2.375-2.344z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1362,7 +1362,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_plus",
         "name": "plus",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M3 0v3h-3v2h3v3h2v-3h3v-2h-3v-3h-2z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1370,7 +1370,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_power-standby",
         "name": "power-standby",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M3 0v4h1v-4h-1zm-1.281 1.438l-.375.313c-.803.64-1.344 1.634-1.344 2.75 0 1.929 1.571 3.5 3.5 3.5s3.5-1.571 3.5-3.5c0-1.116-.529-2.11-1.344-2.75l-.375-.313-.625.781.375.313c.585.46.969 1.165.969 1.969 0 1.391-1.109 2.5-2.5 2.5s-2.5-1.109-2.5-2.5c0-.804.361-1.509.938-1.969l.406-.313-.625-.781z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1410,7 +1410,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_question-mark",
         "name": "question-mark",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M4.469 0c-.854 0-1.48.256-1.875.656s-.54.901-.594 1.281l1 .125c.036-.26.125-.497.313-.688.188-.19.491-.375 1.156-.375.664 0 1.019.163 1.219.344.199.181.281.405.281.656 0 .833-.313 1.063-.813 1.5-.5.438-1.188 1.083-1.188 2.25v.25h1v-.25c0-.833.344-1.063.844-1.5.5-.438 1.156-1.083 1.156-2.25 0-.479-.168-1.02-.594-1.406-.426-.387-1.071-.594-1.906-.594zm-.5 7v1h1v-1h-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1434,7 +1434,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_reload",
         "name": "reload",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M4 0c-2.201 0-4 1.799-4 4s1.799 4 4 4c1.104 0 2.092-.456 2.813-1.188l-.688-.688c-.54.548-1.289.875-2.125.875-1.659 0-3-1.341-3-3s1.341-3 3-3c.834 0 1.545.354 2.094.906l-1.094 1.094h3v-3l-1.188 1.188c-.731-.72-1.719-1.188-2.813-1.188z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1506,7 +1506,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_shield",
         "name": "shield",
-        "category": "Autres (OI)",
+        "category": "Sécurité",
         "path": "M4 0l-.188.094-3.5 1.469-.313.125v.313c0 1.657.666 3.122 1.469 4.188.401.533.828.969 1.25 1.281.422.313.826.531 1.281.531.455 0 .86-.219 1.281-.531.422-.313.849-.749 1.25-1.281.803-1.065 1.469-2.53 1.469-4.188v-.313l-.313-.125-3.5-1.469-.188-.094zm0 1.094v5.906c-.045 0-.328-.069-.656-.313s-.714-.631-1.063-1.094c-.642-.851-1.137-2.025-1.219-3.281l2.938-1.219z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1514,7 +1514,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_signal",
         "name": "signal",
-        "category": "Autres (OI)",
+        "category": "Réseau",
         "path": "M6 0v8h1v-8h-1zm-2 1v7h1v-7h-1zm-2 2v5h1v-5h-1zm-2 2v3h1v-3h-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1570,7 +1570,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_tablet",
         "name": "tablet",
-        "category": "Autres (OI)",
+        "category": "Appareils",
         "path": "M.344 0c-.18 0-.344.164-.344.344v7.313c0 .18.164.344.344.344h6.313c.18 0 .344-.164.344-.344v-7.313c0-.18-.164-.344-.344-.344h-6.313zm.656 1h5v5h-5v-5zm2.5 5.5c.28 0 .5.22.5.5s-.22.5-.5.5-.5-.22-.5-.5.22-.5.5-.5z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1594,7 +1594,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_target",
         "name": "target",
-        "category": "Autres (OI)",
+        "category": "Jeux",
         "path": "M4 0c-2.203 0-4 1.797-4 4 0 2.203 1.797 4 4 4 2.203 0 4-1.797 4-4 0-2.203-1.797-4-4-4zm0 1c1.663 0 3 1.337 3 3s-1.337 3-3 3-3-1.337-3-3 1.337-3 3-3zm0 1c-1.099 0-2 .901-2 2s.901 2 2 2 2-.901 2-2-.901-2-2-2zm0 1c.558 0 1 .442 1 1s-.442 1-1 1-1-.442-1-1 .442-1 1-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1618,7 +1618,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_text",
         "name": "text",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M0 0v2h.5c0-.55.45-1 1-1h1.5v5.5c0 .28-.22.5-.5.5h-.5v1h4v-1h-.5c-.28 0-.5-.22-.5-.5v-5.5h1.5c.55 0 1 .45 1 1h.5v-2h-8z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1642,7 +1642,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_timer",
         "name": "timer",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M2 0v1h1v.031c-1.697.241-3 1.707-3 3.469 0 1.929 1.571 3.5 3.5 3.5s3.5-1.571 3.5-3.5c0-.45-.086-.874-.219-1.25l-.938.344c.107.304.156.596.156.906 0 1.391-1.109 2.5-2.5 2.5s-2.5-1.109-2.5-2.5 1.109-2.5 2.5-2.5c.298 0 .585.051.875.156l.344-.938c-.221-.081-.471-.119-.719-.156v-.063h1v-1h-3zm5 1.125s-3.675 2.8-3.875 3c-.2.2-.2.519 0 .719.2.2.519.2.719 0 .2-.19 3.156-3.719 3.156-3.719z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1650,7 +1650,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_transfer",
         "name": "transfer",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M6 0v1h-6v1h6v1l2-1.5-2-1.5zm-4 4l-2 1.5 2 1.5v-1h6v-1h-6v-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1666,7 +1666,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_underline",
         "name": "underline",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M1 0v4c0 1.1 1.12 2 2.5 2h.5c1.1 0 2-.9 2-2v-4h-1v4c0 .55-.45 1-1 1s-1-.45-1-1v-4h-2zm-1 7v1h7v-1h-7z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1674,7 +1674,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_vertical-align-bottom",
         "name": "vertical-align-bottom",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M.094 0c-.06 0-.094.034-.094.094v4.813c0 .06.034.094.094.094h1.813c.06 0 .094-.034.094-.094v-4.813c0-.06-.034-.094-.094-.094h-1.813zm6 0c-.06 0-.094.034-.094.094v4.813c0 .06.034.094.094.094h1.813c.06 0 .094-.034.094-.094v-4.813c0-.06-.034-.094-.094-.094h-1.813zm-3 2c-.06 0-.094.034-.094.094v2.813c0 .06.034.094.094.094h1.813c.06 0 .094-.034.094-.094v-2.813c0-.06-.034-.094-.094-.094h-1.813zm-3.094 4v1h8v-1h-8z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1682,7 +1682,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_vertical-align-center",
         "name": "vertical-align-center",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M.094 0c-.06 0-.094.034-.094.094v1.906h2v-1.906c0-.06-.034-.094-.094-.094h-1.813zm6 0c-.06 0-.094.034-.094.094v1.906h2v-1.906c0-.06-.034-.094-.094-.094h-1.813zm-3 1c-.06 0-.094.034-.094.094v.906h2v-.906c0-.06-.034-.094-.094-.094h-1.813zm-3.094 2v1h8v-1h-8zm0 2v1.906c0 .06.034.094.094.094h1.813c.06 0 .094-.034.094-.094v-1.906h-2zm3 0v.906c0 .06.034.094.094.094h1.813c.06 0 .094-.034.094-.094v-.906h-2zm3 0v1.906c0 .06.034.094.094.094h1.813c.06 0 .094-.034.094-.094v-1.906h-2z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1690,7 +1690,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_vertical-align-top",
         "name": "vertical-align-top",
-        "category": "Autres (OI)",
+        "category": "Édition",
         "path": "M0 0v1h8v-1h-8zm.094 2c-.06 0-.094.034-.094.094v4.813c0 .06.034.094.094.094h1.813c.06 0 .094-.034.094-.094v-4.813c0-.06-.034-.094-.094-.094h-1.813zm3 0c-.06 0-.094.034-.094.094v2.813c0 .06.034.094.094.094h1.813c.06 0 .094-.034.094-.094v-2.813c0-.06-.034-.094-.094-.094h-1.813zm3 0c-.06 0-.094.034-.094.094v4.813c0 .06.034.094.094.094h1.813c.06 0 .094-.034.094-.094v-4.813c0-.06-.034-.094-.094-.094h-1.813z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1730,7 +1730,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_warning",
         "name": "warning",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M3.094 0c-.06 0-.105.044-.125.094l-2.938 6.813-.031.188v.813c0 .06.034.094.094.094h6.813c.06 0 .094-.034.094-.094v-.813l-.031-.188-2.938-6.813c-.02-.05-.065-.094-.125-.094h-.813zm-.094 3h1v2h-1v-2zm0 3h1v1h-1v-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1738,7 +1738,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_wifi",
         "name": "wifi",
-        "category": "Autres (OI)",
+        "category": "Réseau",
         "path": "M3.75 0c-1.374 0-2.66.372-3.75 1.063l.531.875c.93-.59 2.033-.938 3.219-.938 1.2 0 2.323.31 3.25.906l.531-.813c-1.093-.703-2.401-1.094-3.781-1.094zm.031 3c-.795 0-1.531.227-2.156.625l.531.844c.475-.302 1.02-.469 1.625-.469.593 0 1.13.177 1.594.469l.531-.844c-.616-.388-1.338-.625-2.125-.625zm-.031 3c-.552 0-1 .448-1 1s.448 1 1 1 1-.448 1-1-.448-1-1-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1754,7 +1754,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_x",
         "name": "x",
-        "category": "Autres (OI)",
+        "category": "Symboles",
         "path": "M1.406 0l-1.406 1.406.688.719 1.781 1.781-1.781 1.781-.688.719 1.406 1.406.719-.688 1.781-1.781 1.781 1.781.719.688 1.406-1.406-.688-.719-1.781-1.781 1.781-1.781.688-.719-1.406-1.406-.719.688-1.781 1.781-1.781-1.781-.719-.688z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1770,7 +1770,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_zoom-in",
         "name": "zoom-in",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M3.5 0c-1.927 0-3.5 1.573-3.5 3.5s1.573 3.5 3.5 3.5c.592 0 1.166-.145 1.656-.406a1 1 0 0 0 .094.094l1.031 1.031a1.016 1.016 0 1 0 1.438-1.438l-1.031-1.031a1 1 0 0 0-.125-.094c.266-.493.438-1.059.438-1.656 0-1.927-1.573-3.5-3.5-3.5zm0 1c1.387 0 2.5 1.113 2.5 2.5 0 .587-.196 1.137-.531 1.563l-.031.031a1 1 0 0 0-.063.031 1 1 0 0 0-.281.281 1 1 0 0 0-.063.063c-.422.326-.953.531-1.531.531-1.387 0-2.5-1.113-2.5-2.5s1.113-2.5 2.5-2.5zm-.5 1v1h-1v1h1v1h1v-1h1v-1h-1v-1h-1z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"
@@ -1778,7 +1778,7 @@ export const OPEN_ICONIC_SHAPES = [
     {
         "id": "oi_zoom-out",
         "name": "zoom-out",
-        "category": "Autres (OI)",
+        "category": "Interface",
         "path": "M3.5 0c-1.927 0-3.5 1.573-3.5 3.5s1.573 3.5 3.5 3.5c.592 0 1.166-.145 1.656-.406a1 1 0 0 0 .094.094l1.031 1.031a1.016 1.016 0 1 0 1.438-1.438l-1.031-1.031a1 1 0 0 0-.125-.094c.266-.493.438-1.059.438-1.656 0-1.927-1.573-3.5-3.5-3.5zm0 1c1.387 0 2.5 1.113 2.5 2.5 0 .587-.196 1.137-.531 1.563l-.031.031a1 1 0 0 0-.063.031 1 1 0 0 0-.281.281 1 1 0 0 0-.063.063c-.422.326-.953.531-1.531.531-1.387 0-2.5-1.113-2.5-2.5s1.113-2.5 2.5-2.5zm-1.5 2v1h3v-1h-3z",
         "viewBox": "0 0 8 8",
         "fill": "#555555"

@@ -63,6 +63,12 @@ Si vous avez créé un logo avec plusieurs formes et textes :
 - **Exporter en Image (PNG)** : Pour partager votre création sur les réseaux sociaux ou par email.
 - **Exporter en PDF** : Idéal pour imprimer votre document proprement.
 
+## ⚠️ Limitations Connues
+
+**Alignement du Texte** :
+Dans cette version, l'alignement (gauche, centre, droite) s'applique à **tout le bloc de texte**.
+Si vous souhaitez avoir un paragraphe aligné à gauche et un autre centré, veuillez créer **deux blocs de texte distincts**.
+
 ---
 
 ## ⌨️ Raccourcis Magiques
